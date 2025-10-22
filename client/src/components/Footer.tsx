@@ -1,0 +1,124 @@
+import { SiFacebook, SiLinkedin, SiInstagram } from "react-icons/si";
+
+export default function Footer() {
+  return (
+    <footer className="bg-card border-t border-card-border">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-primary">Evergreen</h3>
+            <p className="text-sm text-muted-foreground">
+              Your strategic partner for sustainable business growth and success.
+            </p>
+            <div className="flex gap-3">
+              <a 
+                href="https://linkedin.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover-elevate active-elevate-2 rounded-full p-2 bg-accent"
+                data-testid="link-footer-linkedin"
+                aria-label="LinkedIn"
+              >
+                <SiLinkedin className="h-4 w-4 text-accent-foreground" />
+              </a>
+              <a 
+                href="https://facebook.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover-elevate active-elevate-2 rounded-full p-2 bg-accent"
+                data-testid="link-footer-facebook"
+                aria-label="Facebook"
+              >
+                <SiFacebook className="h-4 w-4 text-accent-foreground" />
+              </a>
+              <a 
+                href="https://instagram.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover-elevate active-elevate-2 rounded-full p-2 bg-accent"
+                data-testid="link-footer-instagram"
+                aria-label="Instagram"
+              >
+                <SiInstagram className="h-4 w-4 text-accent-foreground" />
+              </a>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <h4 className="font-semibold text-foreground">Quick Links</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a 
+                  href="#about" 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  data-testid="link-footer-about"
+                >
+                  About Us
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#services" 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  data-testid="link-footer-services"
+                >
+                  Services
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#pricing" 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  data-testid="link-footer-pricing"
+                >
+                  Pricing
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#testimonials" 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  data-testid="link-footer-testimonials"
+                >
+                  Testimonials
+                </a>
+              </li>
+            </ul>
+          </div>
+          
+          <div className="space-y-4">
+            <h4 className="font-semibold text-foreground">Contact Information</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>support@evergreen.com</li>
+              <li>(555) 123-4567</li>
+              <li className="pt-2">
+                Operating Hours:<br />
+                Monday - Friday: 9:00 AM - 6:00 PM EST
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="border-t border-card-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+          <p>© 2024 Evergreen. All rights reserved.</p>
+          <div className="flex gap-6">
+            <a 
+              href="#" 
+              className="hover:text-primary transition-colors"
+              data-testid="link-privacy"
+            >
+              Privacy Policy
+            </a>
+            <a 
+              href="#" 
+              className="hover:text-primary transition-colors"
+              data-testid="link-terms"
+            >
+              Terms of Service
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
