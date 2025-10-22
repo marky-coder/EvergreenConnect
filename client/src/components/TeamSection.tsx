@@ -1,25 +1,31 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const teamMembers = [
   {
     name: "Nathaniel Brimlow",
     role: "Owner",
+    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Screen-Shot-2025-04-22-at-9.49.08-AM.png",
   },
   {
     name: "Mohamed Ayman",
     role: "COO",
+    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Ayman-Photos-2-e1746040133825.jpg",
   },
   {
     name: "Mostafa Hossam",
     role: "Head of Outreach",
+    image: "",
   },
   {
     name: "Angel Rafols",
     role: "Acquisition Specialist",
+    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
   },
   {
     name: "Kate Dagatan",
     role: "Acquisition Specialist",
+    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Kate-Photo.jpg",
   },
 ];
 
@@ -41,11 +47,16 @@ export default function TeamSection() {
               data-testid={`card-team-${index}`}
             >
               <CardContent className="pt-6 space-y-4">
-                <div className="w-32 h-32 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-4xl font-bold text-primary">
+                <Avatar className="w-32 h-32 mx-auto">
+                  <AvatarImage 
+                    src={member.image} 
+                    alt={member.name}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
                     {member.name.split(' ').map(n => n[0]).join('')}
-                  </span>
-                </div>
+                  </AvatarFallback>
+                </Avatar>
                 
                 <div>
                   <h3 className="text-xl font-bold text-foreground">{member.name}</h3>
