@@ -16,6 +16,11 @@ const partners = [
     role: "Transaction Coordinator and Due Diligence manager",
     phone: "(512) 586-5833",
   },
+  {
+    name: "Vita Talent",
+    role: "Professional Recruiting and Staffing Solutions",
+    info: "Connecting top talent with exceptional opportunities in the real estate industry",
+  },
 ];
 
 export default function TrustedPartnersSection() {
@@ -24,11 +29,11 @@ export default function TrustedPartnersSection() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            Trusted Partners
+            Success Partners
           </h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 max-w-6xl mx-auto">
           {partners.map((partner, index) => (
             <Card 
               key={index} 

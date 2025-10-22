@@ -18,14 +18,14 @@ const teamMembers = [
     image: "",
   },
   {
+    name: "Ivy Baker",
+    role: "Head of Dispositions Department",
+    image: "",
+  },
+  {
     name: "Angel Rafols",
     role: "Acquisition Specialist",
     image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
-  },
-  {
-    name: "Kate Dagatan",
-    role: "Acquisition Specialist",
-    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Kate-Photo.jpg",
   },
 ];
 
