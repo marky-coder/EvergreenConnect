@@ -20,12 +20,12 @@ export default function HeroSection() {
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-4xl mx-auto space-y-8">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
-            Your Strategic Partner for Business Growth
+            Welcome to Evergreen Investments
           </h1>
           
           <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-            Evergreen delivers premium business solutions tailored to elevate your success. 
-            From data generation to lead acquisition, we're here to help you thrive.
+            Quick and convenient cash offers for your property in any condition. 
+            We skip the listing, commissions, and agents—putting more money in your pocket.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -35,7 +35,7 @@ export default function HeroSection() {
               onClick={() => scrollToSection('contact')}
               data-testid="button-schedule-call"
             >
-              Schedule Free Consultation
+              Get Your Free Cash Offer
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             
@@ -43,10 +43,10 @@ export default function HeroSection() {
               variant="outline"
               size="lg"
               className="text-base sm:text-lg px-8 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
-              onClick={() => scrollToSection('services')}
+              onClick={() => scrollToSection('about')}
               data-testid="button-explore-services"
             >
-              Explore Services
+              Learn More
             </Button>
           </div>
         </div>

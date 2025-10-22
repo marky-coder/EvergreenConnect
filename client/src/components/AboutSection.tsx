@@ -9,24 +9,24 @@ export default function AboutSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
-              About Evergreen
+              Welcome to Evergreen Investments
             </h2>
             
             <div className="space-y-4 text-base md:text-lg">
               <p className="text-foreground">
-                Are you a knowledgeable business professional aiming to excel in your market? 
-                Your search ends here!
+                Here at Evergreen, we love bringing beauty to our community! We are a small, local 
+                company eager to connect home and land owners with solutions to their problems and 
+                pathways to their dreams.
               </p>
               
               <p className="text-muted-foreground">
-                At <span className="font-semibold text-foreground">Evergreen</span>, we go beyond 
-                being a mere service provider—we serve as your strategic ally in achieving success.
+                That is why we provide quick and convenient cash offers for your property in any condition.
               </p>
               
               <p className="text-muted-foreground">
-                Focused on meeting the needs of businesses involved in data generation, lead acquisition, 
-                and sustainable growth, we provide a range of premium services crafted to elevate your 
-                business to unprecedented levels of success.
+                We skip the listing, commissions, appraisals, lenders, and agents and take care of any 
+                clean-up ourselves; putting more money in your pocket and saving you time and energy. 
+                Our data-backed algorithms help us offer you top dollar and we can close as quickly as 14 days!
               </p>
             </div>
             

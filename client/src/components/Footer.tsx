@@ -99,23 +99,33 @@ export default function Footer() {
           </div>
         </div>
         
-        <div className="border-t border-card-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>© 2024 Evergreen. All rights reserved.</p>
-          <div className="flex gap-6">
-            <a 
-              href="#" 
-              className="hover:text-primary transition-colors"
-              data-testid="link-privacy"
-            >
-              Privacy Policy
-            </a>
-            <a 
-              href="#" 
-              className="hover:text-primary transition-colors"
-              data-testid="link-terms"
-            >
-              Terms of Service
-            </a>
+        <div className="border-t border-card-border mt-12 pt-8 space-y-6">
+          <div className="text-center max-w-3xl mx-auto">
+            <blockquote className="text-sm md:text-base text-muted-foreground italic leading-relaxed">
+              "Blessed is the one who trusts in the Lord; whose confidence is in Him. He will be like a tree planted by the water that sends out its roots by the stream. It does not fear when heat comes; its leaves are always green. It has no worries in a year of drought and never fails to bear fruit." 
+              <br />
+              <cite className="font-semibold not-italic">Jeremiah 17:7-8</cite>
+            </blockquote>
+          </div>
+          
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+            <p>Copyright 2025 Invest with Evergreen LLC | All Rights Reserved</p>
+            <div className="flex gap-6">
+              <a 
+                href="#" 
+                className="hover:text-primary transition-colors"
+                data-testid="link-privacy"
+              >
+                Privacy Policy
+              </a>
+              <a 
+                href="#" 
+                className="hover:text-primary transition-colors"
+                data-testid="link-terms"
+              >
+                Terms & Conditions
+              </a>
+            </div>
           </div>
         </div>
       </div>

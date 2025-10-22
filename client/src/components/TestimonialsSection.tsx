@@ -5,27 +5,18 @@ import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
-    name: "George Martinez",
-    title: "Evergreen Client",
-    content: "We appreciate your efforts in managing our outreach strategy. It's crucial for preventing issues and maintaining connectivity. Your approach is working exceptionally well compared to other providers we've used.",
+    name: "Brian",
+    content: "I had the pleasure of working with Lindsey on an investment purchase in Vista. The one word that comes to mind when I think of that transaction is dedication. He went above and beyond to help us navigate a tricky situation with the sellers. He always had our best interest in mind irrespective of what was best for him or his paycheck. That is a rare thing in the real estate business. Hiring Lindsey would be hiring a servant leader that will put others' needs first to get the job done.",
     rating: 5,
   },
   {
-    name: "Antwan Johnson",
-    title: "Evergreen Client",
-    content: "Very impressed by the service so far! The team is professional, responsive, and truly understands our business needs. Highly recommend!",
+    name: "Alix & Audrey",
+    content: "We can't say enough good things about Lindsey! He really worked so hard to make our dream a reality, and we couldn't be more thankful or eager to recommend him. His immense knowledge of the market, his connections, and his confidence really made purchasing a home an exciting and wonderful experience.",
     rating: 5,
   },
   {
-    name: "Jason Williams",
-    title: "Evergreen Client",
-    content: "I love working with you and your team. The level of dedication and quality of service is outstanding. You've helped us grow our business significantly.",
-    rating: 5,
-  },
-  {
-    name: "Evan Rodriguez",
-    title: "Evergreen Client",
-    content: "Evergreen has been amazing. The team has provided exceptional service. I've tried other companies but Evergreen's quality is far superior. Their support helped me secure multiple contracts, generating substantial profit.",
+    name: "Dean",
+    content: "These are the guys that put your interests first. My experience with Steven has been top-notch. He was superb in providing me with what I needed and was a great listener. Steven took care of my needs. I recommend these people since I had such a great experience with Steven.",
     rating: 5,
   },
 ];
@@ -48,11 +39,8 @@ export default function TestimonialsSection() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            What Our Clients Are Saying
+            Happy Clients
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground">
-            We have great client feedback! See what our clients have to say.
-          </p>
         </div>
         
         <div className="max-w-4xl mx-auto">
@@ -71,8 +59,7 @@ export default function TestimonialsSection() {
               </blockquote>
               
               <div className="space-y-1">
-                <div className="font-bold text-lg text-foreground">{currentTestimonial.name}</div>
-                <div className="text-sm text-muted-foreground">{currentTestimonial.title}</div>
+                <div className="font-bold text-lg text-foreground">- {currentTestimonial.name}</div>
               </div>
             </CardContent>
           </Card>
@@ -114,12 +101,6 @@ export default function TestimonialsSection() {
           </div>
         </div>
         
-        <div className="text-center mt-12 p-6 md:p-8 max-w-2xl mx-auto">
-          <blockquote className="text-xl md:text-2xl font-semibold text-foreground italic">
-            "Success in business requires trust, dedication, and the right partnership."
-          </blockquote>
-          <cite className="text-muted-foreground mt-2 block">- Evergreen Team</cite>
-        </div>
       </div>
     </section>
   );
