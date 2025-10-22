@@ -52,7 +52,7 @@ export default function TeamSection() {
                   <AvatarImage 
                     src={member.image} 
                     alt={member.name}
-                    className="object-cover"
+                    className={`object-cover ${member.name === "Mostafa Hossam" ? "grayscale" : ""}`}
                   />
                   <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
                     {member.name.split(' ').map(n => n[0]).join('')}
