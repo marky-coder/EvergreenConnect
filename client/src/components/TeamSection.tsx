@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import mostafaPhoto from '@assets/image_1761176836665.png';
 
 const teamMembers = [
   {
@@ -15,7 +16,7 @@ const teamMembers = [
   {
     name: "Mostafa Hossam",
     role: "Head of Outreach",
-    image: "",
+    image: mostafaPhoto,
   },
   {
     name: "Ivy Baker",
