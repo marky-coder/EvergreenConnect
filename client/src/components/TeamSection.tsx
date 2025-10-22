@@ -24,9 +24,29 @@ const teamMembers = [
     image: "",
   },
   {
+    name: "Nora Zaki",
+    role: "Dispositions Manager",
+    image: "",
+  },
+  {
     name: "Angel Rafols",
     role: "Acquisition Specialist",
     image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
+  },
+  {
+    name: "Maureen Vergara",
+    role: "Team Member",
+    image: "",
+  },
+  {
+    name: "Shay Magdi",
+    role: "Team Member",
+    image: "",
+  },
+  {
+    name: "Ayat Ayman",
+    role: "Team Member",
+    image: "",
   },
 ];
 
@@ -40,7 +60,7 @@ export default function TeamSection() {
           </h2>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {teamMembers.map((member, index) => (
             <Card 
               key={index} 
