@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { SiFacebook, SiLinkedin, SiInstagram } from "react-icons/si";
-import aboutImage from '@assets/generated_images/Professional_team_collaboration_photo_ee4bd62e.png';
+import evergreenLogo from '@assets/evergreen-logo_1761175623900.png';
 
 export default function AboutSection() {
   return (
@@ -9,7 +9,7 @@ export default function AboutSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
-              Welcome to Evergreen Investments
+              Welcome to Evergreen Land Investment
             </h2>
             
             <div className="space-y-4 text-base md:text-lg">
@@ -64,13 +64,13 @@ export default function AboutSection() {
             </div>
           </div>
           
-          <Card className="overflow-hidden">
+          <div className="flex items-center justify-center">
             <img 
-              src={aboutImage} 
-              alt="Evergreen team collaborating" 
-              className="w-full h-full object-cover"
+              src={evergreenLogo} 
+              alt="Evergreen Land Investment Logo" 
+              className="w-full max-w-md h-auto"
             />
-          </Card>
+          </div>
         </div>
       </div>
     </section>

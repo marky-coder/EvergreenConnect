@@ -43,7 +43,7 @@ export default function Header() {
             className="text-2xl md:text-3xl font-bold text-primary hover:opacity-80 transition-opacity"
             data-testid="button-logo"
           >
-            Evergreen
+            Evergreen Land Investment
           </button>
           
           <nav className="hidden md:flex items-center gap-8">

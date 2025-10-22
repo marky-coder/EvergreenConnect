@@ -10,8 +10,8 @@ const teamMembers = [
     role: "COO",
   },
   {
-    name: "Tyson Gongloff",
-    role: "Sales Manager",
+    name: "Mostafa Hossam",
+    role: "Head of Outreach",
   },
   {
     name: "Angel Rafols",

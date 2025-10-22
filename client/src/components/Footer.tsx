@@ -6,9 +6,9 @@ export default function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
           <div className="space-y-4">
-            <h3 className="text-2xl font-bold text-primary">Evergreen</h3>
+            <h3 className="text-2xl font-bold text-primary">Evergreen Land Investment</h3>
             <p className="text-sm text-muted-foreground">
-              Your strategic partner for sustainable business growth and success.
+              Quick and convenient cash offers for your property in any condition.
             </p>
             <div className="flex gap-3">
               <a 
@@ -58,20 +58,20 @@ export default function Footer() {
               </li>
               <li>
                 <a 
-                  href="#services" 
+                  href="#team" 
                   className="text-muted-foreground hover:text-primary transition-colors"
-                  data-testid="link-footer-services"
+                  data-testid="link-footer-team"
                 >
-                  Services
+                  Team
                 </a>
               </li>
               <li>
                 <a 
-                  href="#pricing" 
+                  href="#why-choose" 
                   className="text-muted-foreground hover:text-primary transition-colors"
-                  data-testid="link-footer-pricing"
+                  data-testid="link-footer-why-choose"
                 >
-                  Pricing
+                  Why Choose Us
                 </a>
               </li>
               <li>
