@@ -68,7 +68,7 @@ export default function AboutSection() {
             <img 
               src={evergreenLogo} 
               alt="Evergreen Land Investment Logo" 
-              className="w-full max-w-md h-auto"
+              className="w-full max-w-md h-auto mix-blend-multiply dark:mix-blend-screen"
             />
           </div>
         </div>
