@@ -51,7 +51,7 @@ export default function Header() {
               data-testid="img-logo-header"
             />
             <span className="text-2xl md:text-3xl font-bold text-primary">
-              Evergreen Land Investment
+              Evergreen Land Investments
             </span>
           </button>
           
