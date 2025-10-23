@@ -9,7 +9,7 @@ export default function AboutSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
-              Welcome to Evergreen Land Investment
+              Welcome to Evergreen Land Investments
             </h2>
             
             <div className="space-y-4 text-base md:text-lg">
@@ -64,18 +64,15 @@ export default function AboutSection() {
             </div>
           </div>
           
-          <div className="flex items-center justify-center p-8">
-            <div className="relative">
-              <img 
-                src={evergreenLogo} 
-                alt="Evergreen Land Investment Logo" 
-                className="w-full max-w-sm h-auto drop-shadow-2xl"
-                style={{
-                  filter: 'drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3))',
-                  background: 'transparent'
-                }}
-              />
-            </div>
+          <div className="flex items-center justify-center p-8 bg-black rounded-lg">
+            <img 
+              src={evergreenLogo} 
+              alt="Evergreen Land Investments Logo" 
+              className="w-full max-w-sm h-auto"
+              style={{
+                mixBlendMode: 'screen'
+              }}
+            />
           </div>
         </div>
       </div>
