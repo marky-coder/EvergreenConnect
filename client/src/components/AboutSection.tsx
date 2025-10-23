@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { SiFacebook, SiLinkedin, SiInstagram } from "react-icons/si";
-import evergreenLogo from '@assets/image_1761178060271.png';
+import evergreenLogo from '@assets/image_1761178339487.png';
 
 export default function AboutSection() {
   return (
