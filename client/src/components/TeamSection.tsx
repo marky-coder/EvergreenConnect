@@ -1,17 +1,19 @@
 import { Card, CardContent } from "@/components/ui/card";
-import mostafaPhoto from '@assets/image_1761176836665.png';
-import ivyPhoto from '@assets/image_1761178711107.png';
+import mostafaPhoto from "@assets/image_1761176836665.png";
+import ivyPhoto from "@assets/image_1761178711107.png";
 
 const teamMembers = [
   {
     name: "Nathaniel Brimlow",
     role: "Owner",
-    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Screen-Shot-2025-04-22-at-9.49.08-AM.png",
+    image:
+      "https://investwithevergreen.com/wp-content/uploads/2025/04/Screen-Shot-2025-04-22-at-9.49.08-AM.png",
   },
   {
     name: "Mohamed Ayman",
     role: "COO",
-    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Ayman-Photos-2-e1746040133825.jpg",
+    image:
+      "https://investwithevergreen.com/wp-content/uploads/2025/04/Ayman-Photos-2-e1746040133825.jpg",
   },
   {
     name: "Mostafa Hossam",
@@ -41,7 +43,8 @@ const teamMembers = [
   {
     name: "Angel Rafols",
     role: "Acquisition Specialist",
-    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
+    image:
+      "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
   },
   {
     name: "Maureen Vergara",
@@ -69,32 +72,41 @@ export default function TeamSection() {
             Meet The Team
           </h2>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {teamMembers.map((member, index) => (
-            <Card 
-              key={index} 
+            <Card
+              key={index}
               className="text-center hover-elevate transition-all duration-300"
               data-testid={`card-team-${index}`}
             >
               <CardContent className="p-0 space-y-4">
                 <div className="aspect-square w-full overflow-hidden rounded-t-md">
                   {member.image ? (
-                    <img 
-                      src={member.image} 
+                    <img
+                      src={member.image}
                       alt={member.name}
-                      className={`w-full h-full object-cover ${member.name === "Mostafa Hossam" ? "grayscale" : ""}`}
+                      className={`w-full h-full object-cover object-center ${
+                        member.name === "Mostafa Hossam" ? "grayscale" : ""
+                      }`}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-4xl font-bold">
-                      {member.name.split(' ').map(n => n[0]).join('')}
+                      {member.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
                     </div>
                   )}
                 </div>
-                
+
                 <div className="px-6 pb-6">
-                  <h3 className="text-xl font-bold text-foreground">{member.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{member.role}</p>
+                  <h3 className="text-xl font-bold text-foreground">
+                    {member.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {member.role}
+                  </p>
                 </div>
               </CardContent>
             </Card>
