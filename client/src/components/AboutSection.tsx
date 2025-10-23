@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { SiFacebook, SiLinkedin, SiInstagram } from "react-icons/si";
-import evergreenLogo from '@assets/image_1761177707059.png';
+import evergreenLogo from '@assets/image_1761178060271.png';
 
 export default function AboutSection() {
   return (
@@ -64,14 +64,12 @@ export default function AboutSection() {
             </div>
           </div>
           
-          <div className="flex items-center justify-center p-8 bg-black rounded-lg">
+          <div className="flex items-center justify-center p-8">
             <img 
               src={evergreenLogo} 
               alt="Evergreen Land Investments Logo" 
               className="w-full max-w-sm h-auto"
-              style={{
-                mixBlendMode: 'screen'
-              }}
+              data-testid="img-logo-about"
             />
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "./ThemeToggle";
 import { Menu, X } from "lucide-react";
+import evergreenLogo from '@assets/image_1761178060271.png';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -40,10 +41,18 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 md:h-20">
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="text-2xl md:text-3xl font-bold text-primary hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             data-testid="button-logo"
           >
-            Evergreen Land Investment
+            <img 
+              src={evergreenLogo} 
+              alt="Evergreen Logo" 
+              className="h-10 md:h-12 w-auto"
+              data-testid="img-logo-header"
+            />
+            <span className="text-2xl md:text-3xl font-bold text-primary">
+              Evergreen Land Investment
+            </span>
           </button>
           
           <nav className="hidden md:flex items-center gap-8">
