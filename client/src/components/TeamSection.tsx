@@ -30,6 +30,16 @@ const teamMembers = [
     image: "",
   },
   {
+    name: "Lina Hossam",
+    role: "Acquisitions Manager",
+    image: "",
+  },
+  {
+    name: "Nate Atkins",
+    role: "Acquisitions Manager",
+    image: "",
+  },
+  {
     name: "Angel Rafols",
     role: "Acquisition Specialist",
     image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
