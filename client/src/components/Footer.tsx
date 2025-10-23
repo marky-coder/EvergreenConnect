@@ -103,12 +103,28 @@ export default function Footer() {
               Contact Information
             </h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>info@evergreenlandinvestments.com</li>
-              <li>346-641-3237</li>
+              <li>
+                <a
+                  href="mailto:contact@evergreenlandinvestments.com"
+                  className="hover:text-primary transition-colors"
+                >
+                  contact@evergreenlandinvestments.com
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+19566006000"
+                  className="hover:text-primary transition-colors font-semibold"
+                >
+                  (956) 600-6000
+                </a>
+              </li>
               <li className="pt-2">
                 Operating Hours:
                 <br />
-                Monday - Friday: 9:00 AM - 6:00 PM EST
+                Monday - Friday: 9:00 AM - 6:00 PM
+                <br />
+                Saturday: 10:00 AM - 4:00 PM
               </li>
             </ul>
           </div>
