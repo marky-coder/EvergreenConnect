@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import mostafaPhoto from '@assets/image_1761176836665.png';
+import ivyPhoto from '@assets/image_1761178711107.png';
 
 const teamMembers = [
   {
@@ -21,7 +22,7 @@ const teamMembers = [
   {
     name: "Ivy Baker",
     role: "Head of Dispositions Department",
-    image: "",
+    image: ivyPhoto,
   },
   {
     name: "Nora Zaki",

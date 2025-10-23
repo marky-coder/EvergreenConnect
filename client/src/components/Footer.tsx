@@ -12,7 +12,7 @@ export default function Footer() {
             </p>
             <div className="flex gap-3">
               <a 
-                href="https://linkedin.com" 
+                href="https://www.linkedin.com/company/evergreen-land-investments/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="hover-elevate active-elevate-2 rounded-full p-2 bg-accent"

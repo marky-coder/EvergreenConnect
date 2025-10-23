@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "./ThemeToggle";
 import { Menu, X } from "lucide-react";
-import evergreenLogo from '@assets/image_1761178339487.png';
+import evergreenLogo from '@assets/evergreen-logo-removebg-preview_1761178576710.png';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);

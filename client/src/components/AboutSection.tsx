@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { SiFacebook, SiLinkedin, SiInstagram } from "react-icons/si";
-import evergreenLogo from '@assets/image_1761178339487.png';
+import evergreenLogo from '@assets/evergreen-logo-removebg-preview_1761178576710.png';
 
 export default function AboutSection() {
   return (
@@ -32,7 +32,7 @@ export default function AboutSection() {
             
             <div className="flex gap-4 pt-4">
               <a 
-                href="https://linkedin.com" 
+                href="https://www.linkedin.com/company/evergreen-land-investments/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="hover-elevate active-elevate-2 rounded-full p-3 bg-accent"
