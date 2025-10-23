@@ -89,8 +89,8 @@ export default function Footer() {
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">Contact Information</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>support@evergreen.com</li>
-              <li>(555) 123-4567</li>
+              <li>info@evergreenlandinvestments.com</li>
+              <li>346-641-3237</li>
               <li className="pt-2">
                 Operating Hours:<br />
                 Monday - Friday: 9:00 AM - 6:00 PM EST

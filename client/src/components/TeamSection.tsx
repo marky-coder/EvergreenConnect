@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import mostafaPhoto from '@assets/image_1761176836665.png';
 import ivyPhoto from '@assets/image_1761178711107.png';
 
@@ -46,17 +45,17 @@ const teamMembers = [
   },
   {
     name: "Maureen Vergara",
-    role: "Team Member",
+    role: "Acquisition Specialist",
     image: "",
   },
   {
     name: "Shay Magdi",
-    role: "Team Member",
+    role: "Acquisition Specialist",
     image: "",
   },
   {
     name: "Ayat Ayman",
-    role: "Team Member",
+    role: "Acquisition Specialist",
     image: "",
   },
 ];
@@ -78,19 +77,22 @@ export default function TeamSection() {
               className="text-center hover-elevate transition-all duration-300"
               data-testid={`card-team-${index}`}
             >
-              <CardContent className="pt-6 space-y-4">
-                <Avatar className="w-32 h-32 mx-auto">
-                  <AvatarImage 
-                    src={member.image} 
-                    alt={member.name}
-                    className={`object-cover ${member.name === "Mostafa Hossam" ? "grayscale" : ""}`}
-                  />
-                  <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
-                    {member.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
+              <CardContent className="p-0 space-y-4">
+                <div className="aspect-square w-full overflow-hidden rounded-t-md">
+                  {member.image ? (
+                    <img 
+                      src={member.image} 
+                      alt={member.name}
+                      className={`w-full h-full object-cover ${member.name === "Mostafa Hossam" ? "grayscale" : ""}`}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-4xl font-bold">
+                      {member.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                  )}
+                </div>
                 
-                <div>
+                <div className="px-6 pb-6">
                   <h3 className="text-xl font-bold text-foreground">{member.name}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{member.role}</p>
                 </div>

@@ -47,7 +47,7 @@ export default function Header() {
             <img 
               src={evergreenLogo} 
               alt="Evergreen Logo" 
-              className="h-10 md:h-12 w-auto"
+              className="h-14 md:h-16 w-auto"
               data-testid="img-logo-header"
             />
             <span className="text-2xl md:text-3xl font-bold text-primary">
