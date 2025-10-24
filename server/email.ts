@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 // Email configuration
-const RECIPIENT_EMAIL = "omarabozeid99@gmail.com";
+const RECIPIENT_EMAIL = "info@evergreenlandinvestments.com";
 
 // Create email transporter
 // Note: For production, configure with real SMTP settings in environment variables

@@ -1,19 +1,28 @@
 import { Card, CardContent } from "@/components/ui/card";
 import mostafaPhoto from "@assets/image_1761176836665.png";
-import ivyPhoto from "@assets/image_1761178711107.png";
+import ivyPhoto from "@assets/ivy-baker-photo.png";
+import ayatPhoto from "@assets/ayat-ayman-photo.png";
+import natePhoto from "@assets/nate-atkins-photo.png";
+import mohamedPhoto from "@assets/mohamed-ayman-photo.png";
+import linaPhoto from "@assets/lina-hossam-photo.png";
+import maureenPhoto from "@assets/maureen-vergara-photo.png";
+import hanaPhoto from "@assets/hana-aboubakr-photo.png";
+import nathanielPhoto from "@assets/nathaniel-brimlow-photo.png";
+import ravenPhoto from "@assets/raven-santiago-photo.png";
+import kierPhoto from "@assets/kier-caguioa-photo.png";
 
 const teamMembers = [
   {
     name: "Nathaniel Brimlow",
     role: "Owner",
-    image:
-      "https://investwithevergreen.com/wp-content/uploads/2025/04/Screen-Shot-2025-04-22-at-9.49.08-AM.png",
+    image: nathanielPhoto,
+    imageScale: "scale-125", // Zoom out
   },
   {
     name: "Mohamed Ayman",
     role: "COO",
-    image:
-      "https://investwithevergreen.com/wp-content/uploads/2025/04/Ayman-Photos-2-e1746040133825.jpg",
+    image: mohamedPhoto,
+    imageScale: "scale-125", // Zoom out
   },
   {
     name: "Mostafa Hossam",
@@ -33,12 +42,12 @@ const teamMembers = [
   {
     name: "Lina Hossam",
     role: "Acquisitions Manager",
-    image: "",
+    image: linaPhoto,
   },
   {
     name: "Nate Atkins",
     role: "Acquisitions Manager",
-    image: "",
+    image: natePhoto,
   },
   {
     name: "Angel Rafols",
@@ -49,7 +58,12 @@ const teamMembers = [
   {
     name: "Maureen Vergara",
     role: "Acquisition Specialist",
-    image: "",
+    image: maureenPhoto,
+  },
+  {
+    name: "Hana Aboubakr",
+    role: "Acquisition Specialist",
+    image: hanaPhoto,
   },
   {
     name: "Shay Magdi",
@@ -59,7 +73,17 @@ const teamMembers = [
   {
     name: "Ayat Ayman",
     role: "Acquisition Specialist",
-    image: "",
+    image: ayatPhoto,
+  },
+  {
+    name: "Raven Santiago",
+    role: "Property Analyst",
+    image: ravenPhoto,
+  },
+  {
+    name: "Kier Caguioa",
+    role: "Property Analyst",
+    image: kierPhoto,
   },
 ];
 
@@ -86,9 +110,9 @@ export default function TeamSection() {
                     <img
                       src={member.image}
                       alt={member.name}
-                      className={`w-full h-full object-cover object-center ${
+                      className={`w-full h-full object-cover object-center transition-transform ${
                         member.name === "Mostafa Hossam" ? "grayscale" : ""
-                      }`}
+                      } ${(member as any).imageScale || ""}`}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-4xl font-bold">

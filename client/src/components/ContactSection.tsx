@@ -35,10 +35,10 @@ export default function ContactSection() {
               </div>
               <h3 className="font-semibold text-lg mb-2">Email Us</h3>
               <a
-                href="mailto:contact@evergreenlandinvestments.com"
+                href="mailto:info@evergreenlandinvestments.com"
                 className="text-primary hover:underline break-all"
               >
-                contact@evergreenlandinvestments.com
+                info@evergreenlandinvestments.com
               </a>
             </CardContent>
           </Card>

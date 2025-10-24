@@ -105,10 +105,10 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <a
-                  href="mailto:contact@evergreenlandinvestments.com"
+                  href="mailto:info@evergreenlandinvestments.com"
                   className="hover:text-primary transition-colors"
                 >
-                  contact@evergreenlandinvestments.com
+                  info@evergreenlandinvestments.com
                 </a>
               </li>
               <li>
