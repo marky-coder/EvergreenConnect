@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, Quote, Video, MessageSquare } from "lucide-react";
+import {
+  Star,
+  Quote,
+  Video,
+  MessageSquare,
+  Loader2,
+  Upload as UploadIcon,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Testimonial {
@@ -14,8 +21,10 @@ interface Testimonial {
 }
 
 interface VideoTestimonial {
+  id?: string;
   name: string;
   videoUrl: string;
+  testimonialText?: string;
   thumbnail?: string;
   rating: number;
   type: "video";
@@ -23,7 +32,7 @@ interface VideoTestimonial {
 
 type TestimonialType = Testimonial | VideoTestimonial;
 
-const testimonials: TestimonialType[] = [
+const staticTestimonials: Testimonial[] = [
   {
     name: "Brian",
     content:
@@ -45,25 +54,49 @@ const testimonials: TestimonialType[] = [
     rating: 5,
     type: "text",
   },
-  // Example video testimonials - you can add real video URLs here
-  // {
-  //   name: "Sarah Johnson",
-  //   videoUrl: "https://www.youtube.com/embed/YOUR_VIDEO_ID",
-  //   thumbnail: "https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg",
-  //   rating: 5,
-  //   type: "video",
-  // },
 ];
 
 export default function Testimonials() {
   const [activeTab, setActiveTab] = useState<"all" | "text" | "video">("all");
+  const [videoTestimonials, setVideoTestimonials] = useState<
+    VideoTestimonial[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const textTestimonials = testimonials.filter(
-    (t) => t.type === "text"
-  ) as Testimonial[];
-  const videoTestimonials = testimonials.filter(
-    (t) => t.type === "video"
-  ) as VideoTestimonial[];
+  // Load approved video testimonials from API
+  useEffect(() => {
+    loadApprovedVideos();
+  }, []);
+
+  const loadApprovedVideos = async () => {
+    try {
+      const response = await fetch("/api/testimonials/approved");
+      const data = await response.json();
+
+      if (data.success && data.testimonials) {
+        const videos: VideoTestimonial[] = data.testimonials.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          videoUrl: t.videoUrl,
+          testimonialText: t.testimonialText,
+          rating: 5,
+          type: "video" as const,
+        }));
+        setVideoTestimonials(videos);
+      }
+    } catch (error) {
+      console.error("Error loading video testimonials:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const testimonials: TestimonialType[] = [
+    ...staticTestimonials,
+    ...videoTestimonials,
+  ];
+
+  const textTestimonials = staticTestimonials;
 
   const displayTestimonials =
     activeTab === "text"
@@ -83,10 +116,22 @@ export default function Testimonials() {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
                 Client Testimonials
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground">
+              <p className="text-lg md:text-xl text-muted-foreground mb-8">
                 Hear what our satisfied clients have to say about their
                 experience working with Evergreen Land Investments
               </p>
+              <div className="flex justify-center gap-4">
+                <Button
+                  size="lg"
+                  onClick={() =>
+                    (window.location.href = "/testimonials/upload")
+                  }
+                  className="gap-2"
+                >
+                  <UploadIcon className="w-5 h-5" />
+                  Share Your Story
+                </Button>
+              </div>
             </div>
           </div>
         </section>
@@ -120,11 +165,24 @@ export default function Testimonials() {
               </div>
 
               <TabsContent value="all" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                  {testimonials.map((testimonial, index) => (
-                    <TestimonialCard key={index} testimonial={testimonial} />
-                  ))}
-                </div>
+                {isLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    {testimonials.map((testimonial, index) => (
+                      <TestimonialCard
+                        key={
+                          testimonial.type === "video" && testimonial.id
+                            ? testimonial.id
+                            : index
+                        }
+                        testimonial={testimonial}
+                      />
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="text" className="mt-0">
@@ -136,13 +194,36 @@ export default function Testimonials() {
               </TabsContent>
 
               <TabsContent value="video" className="mt-0">
-                {videoTestimonials.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                    {videoTestimonials.map((testimonial, index) => (
-                      <TestimonialCard key={index} testimonial={testimonial} />
-                    ))}
+                {isLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : videoTestimonials.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Video className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-lg text-muted-foreground mb-4">
+                      No video testimonials yet
+                    </p>
+                    <Button
+                      onClick={() =>
+                        (window.location.href = "/testimonials/upload")
+                      }
+                    >
+                      <UploadIcon className="w-4 h-4 mr-2" />
+                      Be the First to Share
+                    </Button>
                   </div>
                 ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    {videoTestimonials.map((testimonial, index) => (
+                      <TestimonialCard
+                        key={testimonial.id || index}
+                        testimonial={testimonial}
+                      />
+                    ))}
+                  </div>
+                )}
+                {false && (
                   <div className="text-center py-16">
                     <Video className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
                     <h3 className="text-xl font-semibold text-foreground mb-2">

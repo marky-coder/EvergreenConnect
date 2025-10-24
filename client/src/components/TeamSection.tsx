@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import mostafaPhoto from "@assets/image_1761176836665.png";
 import ivyPhoto from "@assets/ivy-baker-photo.png";
 import ayatPhoto from "@assets/ayat-ayman-photo.png";
 import natePhoto from "@assets/nate-atkins-photo.png";
@@ -10,11 +9,12 @@ import hanaPhoto from "@assets/hana-aboubakr-photo.png";
 import nathanielPhoto from "@assets/nathaniel-brimlow-photo.png";
 import ravenPhoto from "@assets/raven-santiago-photo.png";
 import kierPhoto from "@assets/kier-caguioa-photo.png";
+import mostafaPhoto from "@assets/mostafa-hossam-photo.png";
 
 const teamMembers = [
   {
     name: "Nathaniel Brimlow",
-    role: "Owner",
+    role: "CEO",
     image: nathanielPhoto,
     imageScale: "scale-125", // Zoom out
   },
@@ -26,7 +26,7 @@ const teamMembers = [
   },
   {
     name: "Mostafa Hossam",
-    role: "Head of Outreach",
+    role: "Head of Outreach Department",
     image: mostafaPhoto,
   },
   {
@@ -61,8 +61,8 @@ const teamMembers = [
     image: maureenPhoto,
   },
   {
-    name: "Hana Aboubakr",
-    role: "Acquisition Specialist",
+    name: "Hanna Aboubakr",
+    role: "Social Media Manager",
     image: hanaPhoto,
   },
   {
@@ -111,8 +111,8 @@ export default function TeamSection() {
                       src={member.image}
                       alt={member.name}
                       className={`w-full h-full object-cover object-center transition-transform ${
-                        member.name === "Mostafa Hossam" ? "grayscale" : ""
-                      } ${(member as any).imageScale || ""}`}
+                        (member as any).imageScale || ""
+                      }`}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-4xl font-bold">
