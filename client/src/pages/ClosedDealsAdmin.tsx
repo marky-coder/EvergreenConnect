@@ -364,14 +364,20 @@ export default function ClosedDealsAdmin() {
                             location.lat,
                             location.lng
                           );
+                          const isHovered = hoveredId === location.id;
                           return (
-                            <g key={location.id}>
+                            <g
+                              key={location.id}
+                              onMouseEnter={() => setHoveredId(location.id)}
+                              onMouseLeave={() => setHoveredId(null)}
+                              style={{ cursor: "pointer" }}
+                            >
                               {/* Pulsing circle */}
                               <circle
                                 cx={x}
                                 cy={y}
                                 r="12"
-                                fill="#16a34a"
+                                fill={isHovered ? "#22c55e" : "#16a34a"}
                                 opacity="0.3"
                               >
                                 <animate
@@ -393,12 +399,20 @@ export default function ClosedDealsAdmin() {
                               <circle
                                 cx={x}
                                 cy={y}
-                                r="8"
-                                fill="#16a34a"
+                                r={isHovered ? 10 : 8}
+                                fill={isHovered ? "#22c55e" : "#16a34a"}
                                 stroke="white"
                                 strokeWidth="2"
-                                style={{ pointerEvents: "none" }}
                               />
+                              {/* Tooltip */}
+                              <title>
+                                {location.name ||
+                                  (location.city && location.state
+                                    ? `${location.city}, ${location.state}`
+                                    : `Deal (${location.lat.toFixed(
+                                        2
+                                      )}, ${location.lng.toFixed(2)})`)}
+                              </title>
                             </g>
                           );
                         })}
@@ -430,40 +444,110 @@ export default function ClosedDealsAdmin() {
                     </p>
                   ) : (
                     <div className="space-y-2 max-h-96 overflow-y-auto">
-                      {locations.map((location) => (
-                        <div
-                          key={location.id}
-                          className="flex items-start justify-between gap-2 p-3 bg-muted rounded-lg"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {location.city && location.state
-                                ? `${location.city}, ${location.state}`
-                                : "Unknown Location"}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {location.lat.toFixed(2)},{" "}
-                              {location.lng.toFixed(2)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(location.addedAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(location.id)}
-                            disabled={processingId === location.id}
-                            className="text-destructive hover:text-destructive"
+                      {locations.map((location) => {
+                        const isHovered = hoveredId === location.id;
+                        const isEditing = editingId === location.id;
+                        return (
+                          <div
+                            key={location.id}
+                            onMouseEnter={() => setHoveredId(location.id)}
+                            onMouseLeave={() => setHoveredId(null)}
+                            className={`flex items-start justify-between gap-2 p-3 rounded-lg transition-all ${
+                              isHovered
+                                ? "bg-green-50 border-2 border-green-500 scale-105"
+                                : "bg-muted border-2 border-transparent"
+                            }`}
                           >
-                            {processingId === location.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </Button>
-                        </div>
-                      ))}
+                            <div className="flex-1 min-w-0 space-y-2">
+                              {/* Name field */}
+                              {isEditing ? (
+                                <div className="space-y-2">
+                                  <Input
+                                    value={editingName}
+                                    onChange={(e) =>
+                                      setEditingName(e.target.value)
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        handleSaveName(location.id);
+                                      } else if (e.key === "Escape") {
+                                        handleCancelEdit();
+                                      }
+                                    }}
+                                    placeholder="Enter location name..."
+                                    className="h-8 text-sm"
+                                    autoFocus
+                                  />
+                                  <div className="flex gap-1">
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        handleSaveName(location.id)
+                                      }
+                                      disabled={processingId === location.id}
+                                      className="h-7 text-xs"
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={handleCancelEdit}
+                                      className="h-7 text-xs"
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div
+                                  onClick={() => handleStartEdit(location)}
+                                  className="cursor-pointer hover:text-primary transition-colors"
+                                >
+                                  <p className="text-sm font-medium">
+                                    {location.name || (
+                                      <span className="text-muted-foreground italic">
+                                        Click to add name...
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Location details */}
+                              <p className="text-xs text-muted-foreground">
+                                📍{" "}
+                                {location.city && location.state
+                                  ? `${location.city}, ${location.state}`
+                                  : `${location.lat.toFixed(
+                                      2
+                                    )}, ${location.lng.toFixed(2)}`}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                📅{" "}
+                                {new Date(
+                                  location.addedAt
+                                ).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(location.id)}
+                              disabled={
+                                processingId === location.id || isEditing
+                              }
+                              className="text-destructive hover:text-destructive"
+                            >
+                              {processingId === location.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>

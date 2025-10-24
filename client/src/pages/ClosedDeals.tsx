@@ -8,6 +8,7 @@ interface DealLocation {
   id: string;
   lat: number;
   lng: number;
+  name?: string;
   city?: string;
   state?: string;
   addedAt: string;
@@ -148,11 +149,12 @@ export default function ClosedDeals() {
                           />
                           {/* Tooltip on hover */}
                           <title>
-                            {location.city && location.state
-                              ? `${location.city}, ${location.state}`
-                              : `Deal Location (${location.lat.toFixed(
-                                  2
-                                )}, ${location.lng.toFixed(2)})`}
+                            {location.name ||
+                              (location.city && location.state
+                                ? `${location.city}, ${location.state}`
+                                : `Deal Location (${location.lat.toFixed(
+                                    2
+                                  )}, ${location.lng.toFixed(2)})`)}
                           </title>
                         </g>
                       );
