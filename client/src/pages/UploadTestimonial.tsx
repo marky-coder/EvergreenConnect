@@ -55,10 +55,12 @@ export default function UploadTestimonial() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedFile) {
+    // Require at least video OR written testimonial
+    if (!selectedFile && !formData.testimonialText.trim()) {
       toast({
-        title: "❌ No Video Selected",
-        description: "Please select a video to upload",
+        title: "❌ Missing Content",
+        description:
+          "Please provide either a video, written testimonial, or both",
         variant: "destructive",
       });
       return;
@@ -68,7 +70,9 @@ export default function UploadTestimonial() {
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("video", selectedFile);
+      if (selectedFile) {
+        formDataToSend.append("video", selectedFile);
+      }
       formDataToSend.append("name", formData.name);
       formDataToSend.append("testimonialText", formData.testimonialText);
 
@@ -134,11 +138,11 @@ export default function UploadTestimonial() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Video className="w-6 h-6" />
-                  Upload Video Testimonial
+                  Share Your Testimonial
                 </CardTitle>
                 <CardDescription>
-                  Your testimonial will be reviewed before appearing on our
-                  website
+                  Upload a video, write a review, or both! All testimonials are
+                  reviewed before appearing on our website.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -159,14 +163,15 @@ export default function UploadTestimonial() {
 
                   {/* Video Upload */}
                   <div className="space-y-2">
-                    <Label htmlFor="video-upload">Video Testimonial *</Label>
+                    <Label htmlFor="video-upload">
+                      Video Testimonial (Optional)
+                    </Label>
                     <div className="flex flex-col gap-2">
                       <Input
                         id="video-upload"
                         type="file"
                         accept="video/*"
                         onChange={handleFileChange}
-                        required
                         className="cursor-pointer"
                       />
                       {selectedFile && (
@@ -186,11 +191,14 @@ export default function UploadTestimonial() {
                     </div>
                   </div>
 
-                  {/* Testimonial Text (Optional) */}
+                  {/* Testimonial Text */}
                   <div className="space-y-2">
                     <Label htmlFor="testimonial">
                       Written Testimonial (Optional)
                     </Label>
+                    <p className="text-xs text-muted-foreground">
+                      * At least one of video or written testimonial is required
+                    </p>
                     <Textarea
                       id="testimonial"
                       value={formData.testimonialText}

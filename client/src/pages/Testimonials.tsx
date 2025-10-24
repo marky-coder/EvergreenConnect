@@ -32,71 +32,69 @@ interface VideoTestimonial {
 
 type TestimonialType = Testimonial | VideoTestimonial;
 
-const staticTestimonials: Testimonial[] = [
-  {
-    name: "Brian",
-    content:
-      "I had the pleasure of working with Lindsey on an investment purchase in Vista. The one word that comes to mind when I think of that transaction is dedication. He went above and beyond to help us navigate a tricky situation with the sellers. He always had our best interest in mind irrespective of what was best for him or his paycheck. That is a rare thing in the real estate business. Hiring Lindsey would be hiring a servant leader that will put others' needs first to get the job done.",
-    rating: 5,
-    type: "text",
-  },
-  {
-    name: "Alix & Audrey",
-    content:
-      "We can't say enough good things about Lindsey! He really worked so hard to make our dream a reality, and we couldn't be more thankful or eager to recommend him. His immense knowledge of the market, his connections, and his confidence really made purchasing a home an exciting and wonderful experience.",
-    rating: 5,
-    type: "text",
-  },
-  {
-    name: "Dean",
-    content:
-      "These are the guys that put your interests first. My experience with Steven has been top-notch. He was superb in providing me with what I needed and was a great listener. Steven took care of my needs. I recommend these people since I had such a great experience with Steven.",
-    rating: 5,
-    type: "text",
-  },
-];
+// Hardcoded testimonials are now removed - all testimonials loaded from API
 
 export default function Testimonials() {
   const [activeTab, setActiveTab] = useState<"all" | "text" | "video">("all");
+  const [textTestimonials, setTextTestimonials] = useState<Testimonial[]>([]);
   const [videoTestimonials, setVideoTestimonials] = useState<
     VideoTestimonial[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load approved video testimonials from API
+  // Load all approved testimonials from API
   useEffect(() => {
-    loadApprovedVideos();
+    loadApprovedTestimonials();
   }, []);
 
-  const loadApprovedVideos = async () => {
+  const loadApprovedTestimonials = async () => {
     try {
       const response = await fetch("/api/testimonials/approved");
       const data = await response.json();
 
       if (data.success && data.testimonials) {
-        const videos: VideoTestimonial[] = data.testimonials.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          videoUrl: t.videoUrl,
-          testimonialText: t.testimonialText,
-          rating: 5,
-          type: "video" as const,
-        }));
+        const texts: Testimonial[] = [];
+        const videos: VideoTestimonial[] = [];
+
+        data.testimonials.forEach((t: any) => {
+          // If it has video, add to videos array
+          if (t.hasVideo) {
+            videos.push({
+              id: t.id,
+              name: t.name,
+              videoUrl: t.videoUrl,
+              testimonialText: t.testimonialText,
+              rating: 5,
+              type: "video" as const,
+            });
+          }
+
+          // If it has text (and no video), add to text array
+          // Text testimonials with videos are shown in video section
+          if (t.testimonialText && !t.hasVideo) {
+            texts.push({
+              name: t.name,
+              content: t.testimonialText,
+              rating: 5,
+              type: "text" as const,
+            });
+          }
+        });
+
+        setTextTestimonials(texts);
         setVideoTestimonials(videos);
       }
     } catch (error) {
-      console.error("Error loading video testimonials:", error);
+      console.error("Error loading testimonials:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const testimonials: TestimonialType[] = [
-    ...staticTestimonials,
+    ...textTestimonials,
     ...videoTestimonials,
   ];
-
-  const textTestimonials = staticTestimonials;
 
   const displayTestimonials =
     activeTab === "text"
@@ -186,11 +184,32 @@ export default function Testimonials() {
               </TabsContent>
 
               <TabsContent value="text" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                  {textTestimonials.map((testimonial, index) => (
-                    <TestimonialCard key={index} testimonial={testimonial} />
-                  ))}
-                </div>
+                {isLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : textTestimonials.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Quote className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-lg text-muted-foreground mb-4">
+                      No written testimonials yet
+                    </p>
+                    <Button
+                      onClick={() =>
+                        (window.location.href = "/testimonials/upload")
+                      }
+                    >
+                      <UploadIcon className="w-4 h-4 mr-2" />
+                      Share Your Experience
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    {textTestimonials.map((testimonial, index) => (
+                      <TestimonialCard key={index} testimonial={testimonial} />
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="video" className="mt-0">

@@ -85,21 +85,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   });
 
-  // Upload testimonial video (public - no auth required)
+  // Upload testimonial (public - no auth required)
   app.post(
     "/api/testimonials/upload",
     upload.single("video"),
     async (req, res) => {
       try {
-        if (!req.file) {
-          return res.status(400).json({
-            success: false,
-            error: "No video file provided",
-          });
-        }
-
         const { name, testimonialText } = req.body;
 
+        // Validate name is provided
         if (!name) {
           return res.status(400).json({
             success: false,
@@ -107,15 +101,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
+        // Validate at least video OR text is provided
+        if (!req.file && !testimonialText?.trim()) {
+          return res.status(400).json({
+            success: false,
+            error:
+              "Please provide either a video, written testimonial, or both",
+          });
+        }
+
         const testimonial = await addTestimonial(
           name,
           testimonialText || "",
-          req.file.filename
+          req.file?.filename
         );
 
         res.json({
           success: true,
-          message: "Testimonial uploaded successfully",
+          message:
+            "Testimonial submitted successfully! It will be reviewed before appearing on our website.",
           testimonial,
         });
       } catch (error) {

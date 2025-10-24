@@ -18,7 +18,8 @@ interface PendingTestimonial {
   id: string;
   name: string;
   testimonialText: string;
-  videoUrl: string;
+  videoUrl?: string;
+  hasVideo: boolean;
   uploadedAt: string;
 }
 
@@ -221,7 +222,7 @@ export default function TestimonialsAdmin() {
                 Testimonials Admin
               </h1>
               <p className="text-muted-foreground">
-                Review and manage video testimonials
+                Review and manage testimonials (video and written)
               </p>
             </div>
             <Button variant="outline" onClick={handleLogout}>
@@ -255,22 +256,38 @@ export default function TestimonialsAdmin() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* Video Preview */}
-                    <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                      <video
-                        controls
-                        className="w-full h-full"
-                        src={testimonial.videoUrl}
-                      >
-                        Your browser does not support the video tag.
-                      </video>
+                    {/* Type Badge */}
+                    <div className="flex gap-2">
+                      {testimonial.hasVideo && (
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                          Video
+                        </span>
+                      )}
+                      {testimonial.testimonialText && (
+                        <span className="text-xs bg-secondary/10 text-secondary-foreground px-2 py-1 rounded">
+                          Written
+                        </span>
+                      )}
                     </div>
+
+                    {/* Video Preview */}
+                    {testimonial.hasVideo && testimonial.videoUrl && (
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                        <video
+                          controls
+                          className="w-full h-full"
+                          src={testimonial.videoUrl}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    )}
 
                     {/* Testimonial Text */}
                     {testimonial.testimonialText && (
                       <div className="space-y-2">
                         <Label>Written Testimonial:</Label>
-                        <p className="text-sm text-muted-foreground bg-muted p-4 rounded-lg">
+                        <p className="text-sm text-muted-foreground bg-muted p-4 rounded-lg whitespace-pre-wrap">
                           {testimonial.testimonialText}
                         </p>
                       </div>

@@ -6,8 +6,9 @@ export interface Testimonial {
   id: string;
   name: string;
   testimonialText: string;
-  videoFilename: string;
-  videoUrl: string;
+  videoFilename?: string;
+  videoUrl?: string;
+  hasVideo: boolean;
   status: "pending" | "approved";
   uploadedAt: string;
 }
@@ -47,7 +48,7 @@ async function writeTestimonials(testimonials: Testimonial[]): Promise<void> {
 export async function addTestimonial(
   name: string,
   testimonialText: string,
-  videoFilename: string
+  videoFilename?: string
 ): Promise<Testimonial> {
   const testimonials = await readTestimonials();
 
@@ -55,11 +56,16 @@ export async function addTestimonial(
     id: nanoid(),
     name,
     testimonialText,
-    videoFilename,
-    videoUrl: `/uploads/testimonials/pending/${videoFilename}`,
+    hasVideo: !!videoFilename,
     status: "pending",
     uploadedAt: new Date().toISOString(),
   };
+
+  // Add video info if video was uploaded
+  if (videoFilename) {
+    newTestimonial.videoFilename = videoFilename;
+    newTestimonial.videoUrl = `/uploads/testimonials/pending/${videoFilename}`;
+  }
 
   testimonials.push(newTestimonial);
   await writeTestimonials(testimonials);
@@ -88,33 +94,35 @@ export async function approveTestimonial(id: string): Promise<boolean> {
     return false;
   }
 
-  // Move video file from pending to approved
-  const pendingPath = path.join(
-    process.cwd(),
-    "uploads",
-    "testimonials",
-    "pending",
-    testimonial.videoFilename
-  );
-  const approvedPath = path.join(
-    process.cwd(),
-    "uploads",
-    "testimonials",
-    "approved",
-    testimonial.videoFilename
-  );
-
   try {
-    await fs.rename(pendingPath, approvedPath);
+    // Move video file from pending to approved (if there is a video)
+    if (testimonial.hasVideo && testimonial.videoFilename) {
+      const pendingPath = path.join(
+        process.cwd(),
+        "uploads",
+        "testimonials",
+        "pending",
+        testimonial.videoFilename
+      );
+      const approvedPath = path.join(
+        process.cwd(),
+        "uploads",
+        "testimonials",
+        "approved",
+        testimonial.videoFilename
+      );
 
-    // Update testimonial
+      await fs.rename(pendingPath, approvedPath);
+      testimonial.videoUrl = `/uploads/testimonials/approved/${testimonial.videoFilename}`;
+    }
+
+    // Update testimonial status
     testimonial.status = "approved";
-    testimonial.videoUrl = `/uploads/testimonials/approved/${testimonial.videoFilename}`;
 
     await writeTestimonials(testimonials);
     return true;
   } catch (error) {
-    console.error("Error moving video file:", error);
+    console.error("Error approving testimonial:", error);
     return false;
   }
 }
@@ -128,19 +136,21 @@ export async function rejectTestimonial(id: string): Promise<boolean> {
     return false;
   }
 
-  // Delete video file
-  const videoPath = path.join(
-    process.cwd(),
-    "uploads",
-    "testimonials",
-    testimonial.status,
-    testimonial.videoFilename
-  );
+  // Delete video file (if there is one)
+  if (testimonial.hasVideo && testimonial.videoFilename) {
+    const videoPath = path.join(
+      process.cwd(),
+      "uploads",
+      "testimonials",
+      testimonial.status,
+      testimonial.videoFilename
+    );
 
-  try {
-    await fs.unlink(videoPath);
-  } catch (error) {
-    console.error("Error deleting video file:", error);
+    try {
+      await fs.unlink(videoPath);
+    } catch (error) {
+      console.error("Error deleting video file:", error);
+    }
   }
 
   // Remove from storage
