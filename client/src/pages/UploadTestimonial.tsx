@@ -84,9 +84,24 @@ export default function UploadTestimonial() {
       const data = await response.json();
 
       if (data.success) {
+        const hasVideo = !!selectedFile;
+        const hasText = !!formData.testimonialText.trim();
+        let description =
+          "Your testimonial has been submitted successfully. Thank you!";
+
+        if (hasVideo && hasText) {
+          description =
+            "Your video and written testimonial have been submitted. Thank you!";
+        } else if (hasVideo) {
+          description = "Your video testimonial has been submitted. Thank you!";
+        } else if (hasText) {
+          description =
+            "Your written testimonial has been submitted. Thank you!";
+        }
+
         toast({
           title: "✅ Success!",
-          description: "Your video testimonial has been submitted. Thank you!",
+          description,
         });
 
         // Reset form
@@ -127,21 +142,32 @@ export default function UploadTestimonial() {
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
                 Share Your Experience
               </h1>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-muted-foreground mb-2">
                 We'd love to hear about your experience with Evergreen Land
-                Investments. Upload a video testimonial to share your story!
+                Investments!
+              </p>
+              <p className="text-base text-muted-foreground">
+                Share your story with a video, write a review, or both – it's up
+                to you!
               </p>
             </div>
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Video className="w-6 h-6" />
+                <CardTitle className="text-2xl">
                   Share Your Testimonial
                 </CardTitle>
-                <CardDescription>
-                  Upload a video, write a review, or both! All testimonials are
-                  reviewed before appearing on our website.
+                <CardDescription className="text-base mt-2">
+                  <strong>Choose your preferred format:</strong>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>Write a text review (quick and easy)</li>
+                    <li>Record a video testimonial (more personal)</li>
+                    <li>Do both for maximum impact!</li>
+                  </ul>
+                  <span className="block mt-3 text-sm">
+                    All testimonials are reviewed before appearing on our
+                    website.
+                  </span>
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -160,11 +186,43 @@ export default function UploadTestimonial() {
                     />
                   </div>
 
-                  {/* Video Upload */}
+                  {/* Testimonial Text - Moved to top for prominence */}
+                  <div className="space-y-2">
+                    <Label htmlFor="testimonial" className="text-base">
+                      Written Testimonial
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Share your experience with Evergreen Land Investments in
+                      your own words. Tell us what you appreciated most about
+                      working with us!
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      * You must provide either a written testimonial, a video,
+                      or both
+                    </p>
+                    <Textarea
+                      id="testimonial"
+                      value={formData.testimonialText}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          testimonialText: e.target.value,
+                        })
+                      }
+                      placeholder="Example: Working with Evergreen was a breeze! They made the entire process smooth and stress-free. I highly recommend them to anyone looking to sell their land quickly and fairly."
+                      rows={6}
+                      className="resize-y"
+                    />
+                  </div>
+
+                  {/* Video Upload - Now comes after text */}
                   <div className="space-y-2">
                     <Label htmlFor="video-upload">
                       Video Testimonial (Optional)
                     </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Want to add a personal touch? Upload a video testimonial!
+                    </p>
                     <div className="flex flex-col gap-2">
                       <Input
                         id="video-upload"
@@ -188,28 +246,6 @@ export default function UploadTestimonial() {
                         etc.
                       </p>
                     </div>
-                  </div>
-
-                  {/* Testimonial Text */}
-                  <div className="space-y-2">
-                    <Label htmlFor="testimonial">
-                      Written Testimonial (Optional)
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      * At least one of video or written testimonial is required
-                    </p>
-                    <Textarea
-                      id="testimonial"
-                      value={formData.testimonialText}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          testimonialText: e.target.value,
-                        })
-                      }
-                      placeholder="Share your experience in writing..."
-                      rows={4}
-                    />
                   </div>
 
                   {/* Submit Button */}

@@ -159,3 +159,86 @@ export async function rejectTestimonial(id: string): Promise<boolean> {
 
   return true;
 }
+
+// Edit a testimonial
+export async function editTestimonial(
+  id: string,
+  updates: { name?: string; testimonialText?: string }
+): Promise<boolean> {
+  const testimonials = await readTestimonials();
+  const testimonial = testimonials.find((t) => t.id === id);
+
+  if (!testimonial) {
+    return false;
+  }
+
+  // Update fields if provided
+  if (updates.name !== undefined) {
+    testimonial.name = updates.name;
+  }
+  if (updates.testimonialText !== undefined) {
+    testimonial.testimonialText = updates.testimonialText;
+  }
+
+  await writeTestimonials(testimonials);
+  return true;
+}
+
+// Delete video from testimonial (keep the text testimonial)
+export async function deleteVideoFromTestimonial(id: string): Promise<boolean> {
+  const testimonials = await readTestimonials();
+  const testimonial = testimonials.find((t) => t.id === id);
+
+  if (!testimonial || !testimonial.hasVideo) {
+    return false;
+  }
+
+  // Delete video file
+  if (testimonial.videoFilename) {
+    const videoPath = path.join(
+      process.cwd(),
+      "uploads",
+      "testimonials",
+      testimonial.status,
+      testimonial.videoFilename
+    );
+
+    try {
+      await fs.unlink(videoPath);
+    } catch (error) {
+      console.error("Error deleting video file:", error);
+    }
+  }
+
+  // Update testimonial - remove video data
+  testimonial.hasVideo = false;
+  testimonial.videoFilename = undefined;
+  testimonial.videoUrl = undefined;
+
+  await writeTestimonials(testimonials);
+  return true;
+}
+
+// Delete text from testimonial (keep the video)
+export async function deleteTextFromTestimonial(id: string): Promise<boolean> {
+  const testimonials = await readTestimonials();
+  const testimonial = testimonials.find((t) => t.id === id);
+
+  if (!testimonial || !testimonial.testimonialText) {
+    return false;
+  }
+
+  // Update testimonial - remove text
+  testimonial.testimonialText = "";
+
+  await writeTestimonials(testimonials);
+  return true;
+}
+
+// Get a single testimonial by ID
+export async function getTestimonialById(
+  id: string
+): Promise<Testimonial | null> {
+  const testimonials = await readTestimonials();
+  return testimonials.find((t) => t.id === id) || null;
+}

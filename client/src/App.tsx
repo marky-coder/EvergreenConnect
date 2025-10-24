@@ -8,6 +8,8 @@ import Testimonials from "@/pages/Testimonials";
 import GetOffer from "@/pages/GetOffer";
 import UploadTestimonial from "@/pages/UploadTestimonial";
 import TestimonialsAdmin from "@/pages/TestimonialsAdmin";
+import ClosedDeals from "@/pages/ClosedDeals";
+import ClosedDealsAdmin from "@/pages/ClosedDealsAdmin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -17,6 +19,8 @@ function Router() {
       <Route path="/testimonials" component={Testimonials} />
       <Route path="/testimonials/upload" component={UploadTestimonial} />
       <Route path="/testimonials/admin" component={TestimonialsAdmin} />
+      <Route path="/closed-deals" component={ClosedDeals} />
+      <Route path="/closed-deals/admin" component={ClosedDealsAdmin} />
       <Route path="/get-offer" component={GetOffer} />
       <Route component={NotFound} />
     </Switch>

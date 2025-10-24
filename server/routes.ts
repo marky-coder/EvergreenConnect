@@ -10,7 +10,17 @@ import {
   getApprovedTestimonials,
   approveTestimonial,
   rejectTestimonial,
+  editTestimonial,
+  deleteVideoFromTestimonial,
+  deleteTextFromTestimonial,
+  getTestimonialById,
 } from "./testimonials-storage";
+import {
+  addDealLocation,
+  getAllDealLocations,
+  deleteDealLocation,
+  updateDealLocationName,
+} from "./deals-storage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API route to submit cash offer form
@@ -214,6 +224,216 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         error: "Failed to reject testimonial",
+      });
+    }
+  });
+
+  // Edit testimonial (admin only - password checked in frontend)
+  app.put("/api/testimonials/edit/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, testimonialText } = req.body;
+
+      const success = await editTestimonial(id, { name, testimonialText });
+
+      if (success) {
+        res.json({
+          success: true,
+          message: "Testimonial updated successfully",
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: "Testimonial not found",
+        });
+      }
+    } catch (error) {
+      console.error("Error editing testimonial:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to edit testimonial",
+      });
+    }
+  });
+
+  // Delete video from testimonial (admin only - password checked in frontend)
+  app.delete("/api/testimonials/:id/video", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await deleteVideoFromTestimonial(id);
+
+      if (success) {
+        res.json({
+          success: true,
+          message: "Video deleted successfully",
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: "Testimonial not found or has no video",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting video:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to delete video",
+      });
+    }
+  });
+
+  // Delete text from testimonial (admin only - password checked in frontend)
+  app.delete("/api/testimonials/:id/text", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await deleteTextFromTestimonial(id);
+
+      if (success) {
+        res.json({
+          success: true,
+          message: "Text deleted successfully",
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: "Testimonial not found or has no text",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting text:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to delete text",
+      });
+    }
+  });
+
+  // Get single testimonial by ID (admin only - password checked in frontend)
+  app.get("/api/testimonials/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const testimonial = await getTestimonialById(id);
+
+      if (testimonial) {
+        res.json({
+          success: true,
+          testimonial,
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: "Testimonial not found",
+        });
+      }
+    } catch (error) {
+      console.error("Error getting testimonial:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to get testimonial",
+      });
+    }
+  });
+
+  // Get all deal locations (public)
+  app.get("/api/deals/locations", async (req, res) => {
+    try {
+      const locations = await getAllDealLocations();
+      res.json({
+        success: true,
+        locations,
+      });
+    } catch (error) {
+      console.error("Error getting deal locations:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to get deal locations",
+      });
+    }
+  });
+
+  // Add deal location (admin only - no auth for simplicity)
+  app.post("/api/deals/locations", async (req, res) => {
+    try {
+      const { lat, lng, name, city, state } = req.body;
+
+      if (!lat || !lng) {
+        return res.status(400).json({
+          success: false,
+          error: "Latitude and longitude are required",
+        });
+      }
+
+      const location = await addDealLocation(lat, lng, name, city, state);
+      res.json({
+        success: true,
+        location,
+      });
+    } catch (error) {
+      console.error("Error adding deal location:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to add deal location",
+      });
+    }
+  });
+
+  // Update deal location name (admin only)
+  app.put("/api/deals/locations/:id/name", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name } = req.body;
+
+      if (name === undefined) {
+        return res.status(400).json({
+          success: false,
+          error: "Name is required",
+        });
+      }
+
+      const success = await updateDealLocationName(id, name);
+
+      if (success) {
+        res.json({
+          success: true,
+          message: "Location name updated",
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: "Location not found",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating location name:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to update location name",
+      });
+    }
+  });
+
+  // Delete deal location (admin only)
+  app.delete("/api/deals/locations/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await deleteDealLocation(id);
+
+      if (success) {
+        res.json({
+          success: true,
+          message: "Deal location deleted",
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: "Deal location not found",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting deal location:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to delete deal location",
       });
     }
   });

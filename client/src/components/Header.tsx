@@ -55,6 +55,7 @@ export default function Header() {
     { label: "About", id: "about" },
     { label: "Team", id: "team" },
     { label: "Why Choose Us", id: "why-choose" },
+    { label: "Closed Deals", id: "closed-deals", isPage: true },
     { label: "Testimonials", id: "testimonials", isPage: true },
     { label: "Get Cash Offer", id: "get-offer", isPage: true },
   ];

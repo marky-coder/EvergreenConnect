@@ -10,6 +10,9 @@ import nathanielPhoto from "@assets/nathaniel-brimlow-photo.png";
 import ravenPhoto from "@assets/raven-santiago-photo.png";
 import kierPhoto from "@assets/kier-caguioa-photo.png";
 import mostafaPhoto from "@assets/mostafa-hossam-photo.png";
+import denisePhoto from "@assets/denise-mancera-photo.png";
+import shayPhoto from "@assets/shay-magdi-photo.png";
+import noraPhoto from "@assets/nora-zaki-photo.png";
 
 const teamMembers = [
   {
@@ -37,7 +40,7 @@ const teamMembers = [
   {
     name: "Nora Zaki",
     role: "Dispositions Manager",
-    image: "",
+    image: noraPhoto,
   },
   {
     name: "Lina Hossam",
@@ -48,6 +51,16 @@ const teamMembers = [
     name: "Nate Atkins",
     role: "Acquisitions Manager",
     image: natePhoto,
+  },
+  {
+    name: "Denise Mancera",
+    role: "Success Manager",
+    image: denisePhoto,
+  },
+  {
+    name: "Hanna Aboubakr",
+    role: "Social Media Manager",
+    image: hanaPhoto,
   },
   {
     name: "Angel Rafols",
@@ -61,19 +74,15 @@ const teamMembers = [
     image: maureenPhoto,
   },
   {
-    name: "Hanna Aboubakr",
-    role: "Social Media Manager",
-    image: hanaPhoto,
-  },
-  {
-    name: "Shay Magdi",
-    role: "Acquisition Specialist",
-    image: "",
-  },
-  {
     name: "Ayat Ayman",
     role: "Acquisition Specialist",
     image: ayatPhoto,
+  },
+  ,
+  {
+    name: "Shay Magdi",
+    role: "Acquisition Specialist",
+    image: shayPhoto,
   },
   {
     name: "Raven Santiago",
