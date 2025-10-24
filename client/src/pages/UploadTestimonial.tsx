@@ -86,8 +86,7 @@ export default function UploadTestimonial() {
       if (data.success) {
         toast({
           title: "✅ Success!",
-          description:
-            "Your video testimonial has been submitted for review. Thank you!",
+          description: "Your video testimonial has been submitted. Thank you!",
         });
 
         // Reset form
