@@ -13,8 +13,15 @@ import mostafaPhoto from "@assets/mostafa-hossam-photo.png";
 import denisePhoto from "@assets/denise-mancera-photo.png";
 import shayPhoto from "@assets/shay-magdi-photo.png";
 import noraPhoto from "@assets/nora-zaki-photo.png";
+import markAnthonyPhoto from "@assets/mark-anthony-photo.jpeg";
+import lindseyJohnsonPhoto from "@assets/lindsey-johnson-photo.jpeg";
 
 const teamMembers = [
+  {
+    name: "Lindsey Johnson",
+    role: "Founder",
+    image: lindseyJohnsonPhoto,
+  },
   {
     name: "Nathaniel Brimlow",
     role: "CEO",
@@ -78,7 +85,6 @@ const teamMembers = [
     role: "Acquisition Specialist",
     image: ayatPhoto,
   },
-  ,
   {
     name: "Shay Magdi",
     role: "Acquisition Specialist",
@@ -94,26 +100,31 @@ const teamMembers = [
     role: "Property Analyst",
     image: kierPhoto,
   },
+  {
+    name: "Mark Anthony",
+    role: "Automation Expert",
+    image: markAnthonyPhoto,
+  },
 ];
 
 export default function TeamSection() {
   return (
-    <section id="team" className="py-16 md:py-24 lg:py-32 bg-muted/30">
+    <section id="team" className="py-12 md:py-16 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+        <div className="text-center max-w-3xl mx-auto mb-8 md:mb-10">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4">
             Meet The Team
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4">
           {teamMembers.map((member, index) => (
             <Card
               key={index}
               className="text-center hover-elevate transition-all duration-300"
               data-testid={`card-team-${index}`}
             >
-              <CardContent className="p-0 space-y-4">
+              <CardContent className="p-0 space-y-2">
                 <div className="aspect-square w-full overflow-hidden rounded-t-md">
                   {member.image ? (
                     <img
@@ -124,7 +135,7 @@ export default function TeamSection() {
                       }`}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-4xl font-bold">
+                    <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
                       {member.name
                         .split(" ")
                         .map((n) => n[0])
@@ -133,11 +144,11 @@ export default function TeamSection() {
                   )}
                 </div>
 
-                <div className="px-6 pb-6">
-                  <h3 className="text-xl font-bold text-foreground">
+                <div className="px-3 pb-3">
+                  <h3 className="text-sm md:text-base font-bold text-foreground leading-tight">
                     {member.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1 leading-tight">
                     {member.role}
                   </p>
                 </div>

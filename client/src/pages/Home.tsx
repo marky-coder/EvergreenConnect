@@ -33,8 +33,6 @@ export default function Home() {
       <main>
         <HeroSection />
         <AboutSection />
-        <TeamSection />
-        <TrustedPartnersSection />
         <WhyChooseSection />
         <ProcessSection />
 
@@ -73,6 +71,8 @@ export default function Home() {
           </div>
         </section>
 
+        <TeamSection />
+        <TrustedPartnersSection />
         <ContactSection />
       </main>
       <Footer />
