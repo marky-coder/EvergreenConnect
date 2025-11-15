@@ -16,7 +16,14 @@ import noraPhoto from "@assets/nora-zaki-photo.png";
 import markAnthonyPhoto from "@assets/mark-anthony-photo.jpeg";
 import lindseyJohnsonPhoto from "@assets/lindsey-johnson-photo.jpeg";
 
-const teamMembers = [
+type TeamMember = {
+  name: string;
+  role: string;
+  image?: string;
+  imageScale?: string;
+};
+
+const teamMembers: TeamMember[] = [
   {
     name: "Lindsey Johnson",
     role: "Founder",
@@ -26,13 +33,14 @@ const teamMembers = [
     name: "Nathaniel Brimlow",
     role: "Founder/CEO",
     image: nathanielPhoto,
-    imageScale: "scale-125",
+    // 👉 main change: zoom in a bit more and crop from the top
+    imageScale: "scale-[1.35] object-top",
   },
   {
     name: "Mohamed Ayman",
     role: "COO",
     image: mohamedPhoto,
-    imageScale: "scale-125",
+    imageScale: "scale-125 object-center",
   },
   {
     name: "Mostafa Hossam",
@@ -117,22 +125,21 @@ export default function TeamSection() {
           </h2>
         </div>
 
-        {/* flex-wrap + justify-center = centered last row */}
-        <div className="flex flex-wrap justify-center gap-3 md:gap-4 lg:gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4">
           {teamMembers.map((member, index) => (
             <Card
               key={index}
-              className="text-center hover-elevate transition-all duration-300 w-[42%] min-[420px]:w-[38%] sm:w-[30%] md:w-[22%] lg:w-[18%] xl:w-[16%]"
+              className="text-center hover-elevate transition-all duration-300"
               data-testid={`card-team-${index}`}
             >
               <CardContent className="p-0 space-y-2">
-                <div className="aspect-[3/4] w-full overflow-hidden rounded-t-md">
+                <div className="aspect-square w-full overflow-hidden rounded-t-md">
                   {member.image ? (
                     <img
                       src={member.image}
                       alt={member.name}
-                      className={`w-full h-full object-cover object-center transition-transform ${
-                        (member as any).imageScale || ""
+                      className={`w-full h-full object-cover transition-transform ${
+                        member.imageScale ?? "object-center"
                       }`}
                     />
                   ) : (
