@@ -26,13 +26,13 @@ const teamMembers = [
     name: "Nathaniel Brimlow",
     role: "CEO",
     image: nathanielPhoto,
-    imageScale: "scale-125", // Zoom out
+    imageScale: "scale-125",
   },
   {
     name: "Mohamed Ayman",
     role: "COO",
     image: mohamedPhoto,
-    imageScale: "scale-125", // Zoom out
+    imageScale: "scale-125",
   },
   {
     name: "Mostafa Hossam",
@@ -117,15 +117,16 @@ export default function TeamSection() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4">
+        {/* flex-wrap + justify-center = centered last row */}
+        <div className="flex flex-wrap justify-center gap-3 md:gap-4 lg:gap-5">
           {teamMembers.map((member, index) => (
             <Card
               key={index}
-              className="text-center hover-elevate transition-all duration-300"
+              className="text-center hover-elevate transition-all duration-300 w-[42%] min-[420px]:w-[38%] sm:w-[30%] md:w-[22%] lg:w-[18%] xl:w-[16%]"
               data-testid={`card-team-${index}`}
             >
               <CardContent className="p-0 space-y-2">
-                <div className="aspect-square w-full overflow-hidden rounded-t-md">
+                <div className="aspect-[3/4] w-full overflow-hidden rounded-t-md">
                   {member.image ? (
                     <img
                       src={member.image}
