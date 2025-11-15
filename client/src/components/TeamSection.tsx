@@ -24,7 +24,7 @@ const teamMembers = [
   },
   {
     name: "Nathaniel Brimlow",
-    role: "CEO",
+    role: "Founder/CEO",
     image: nathanielPhoto,
     imageScale: "scale-125",
   },
