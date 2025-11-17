@@ -27,8 +27,8 @@ const teamMembers = [
     name: "Nathaniel Brimlow",
     role: "Founder/CEO",
     image: nathanielPhoto,
-    // zoom in and crop from the top so his head matches other portraits
-    imageScale: "scale-125 object-top",
+    // much tighter crop + slightly pull up to remove white gap
+    imageScale: "scale-[1.45] -translate-y-2 object-top",
   },
   {
     name: "Mohamed Ayman",
