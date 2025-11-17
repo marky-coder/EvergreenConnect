@@ -15,6 +15,7 @@ import shayPhoto from "@assets/shay-magdi-photo.png";
 import noraPhoto from "@assets/nora-zaki-photo.png";
 import markAnthonyPhoto from "@assets/mark-anthony-photo.jpeg";
 import lindseyJohnsonPhoto from "@assets/lindsey-johnson-photo.jpeg";
+import kateImperialPhoto from "@assets/kate-imperial-photo.png"; // ⬅️ Kate
 
 const teamMembers = [
   {
@@ -99,6 +100,11 @@ const teamMembers = [
     name: "Kier Caguioa",
     role: "Property Analyst",
     image: kierPhoto,
+  },
+  {
+    name: "Kate Imperial",
+    role: "Data Manager",
+    image: kateImperialPhoto,
   },
   {
     name: "Mark Anthony",
