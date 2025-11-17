@@ -13,7 +13,7 @@ import mostafaPhoto from "@assets/mostafa-hossam-photo.png";
 import denisePhoto from "@assets/denise-mancera-photo.png";
 import shayPhoto from "@assets/shay-magdi-photo.png";
 import noraPhoto from "@assets/nora-zaki-photo.png";
-import markAnthonyPhoto from "@assets/mark-anthony-photo.jpeg";
+import markAnthonyPhoto from "@assets/mark-anthony-photo.png";
 import lindseyJohnsonPhoto from "@assets/lindsey-johnson-photo.jpeg";
 import kateImperialPhoto from "@assets/kate-imperial-photo.png"; // ⬅️ Kate
 
