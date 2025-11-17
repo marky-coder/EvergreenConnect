@@ -26,7 +26,7 @@ const teamMembers = [
     name: "Nathaniel Brimlow",
     role: "Founder/CEO",
     image: nathanielPhoto,
-    imageScale: "scale-110", // tweak if you want a tiny zoom
+    imageScale: "scale-110", // slight zoom to remove white border
   },
   {
     name: "Mohamed Ayman",
@@ -106,6 +106,9 @@ const teamMembers = [
   },
 ];
 
+const firstRows = teamMembers.slice(0, 12); // 3 rows x 4
+const lastRow = teamMembers.slice(12); // 5 people
+
 export default function TeamSection() {
   return (
     <section id="team" className="py-16 md:py-20 bg-background">
@@ -116,16 +119,57 @@ export default function TeamSection() {
           </h2>
         </div>
 
-        {/* Switched from CSS grid to flexbox so the last row centers nicely */}
-        <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-6xl mx-auto">
-          {teamMembers.map((member, index) => (
+        {/* Top 3 rows – 4 per row on desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto mb-8">
+          {firstRows.map((member, index) => (
             <Card
-              key={index}
+              key={member.name + index}
               className="overflow-hidden bg-card/90 border border-border/60 shadow-md"
               data-testid={`card-team-${index}`}
             >
               <CardContent className="p-0">
-                <div className="w-[150px] sm:w-[170px] md:w-[190px] lg:w-[200px] aspect-[3/4] overflow-hidden">
+                <div className="w-full aspect-[3/4] overflow-hidden">
+                  {member.image ? (
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className={`w-full h-full object-cover object-center transition-transform duration-500 ${
+                        (member as any).imageScale || ""
+                      }`}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
+                      {member.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-4 py-3 text-center">
+                  <h3 className="text-sm md:text-base font-semibold text-foreground leading-tight">
+                    {member.name}
+                  </h3>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">
+                    {member.role}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Last row – 5 centered */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 max-w-5xl mx-auto">
+          {lastRow.map((member, index) => (
+            <Card
+              key={member.name + "last-" + index}
+              className="overflow-hidden bg-card/90 border border-border/60 shadow-md"
+              data-testid={`card-team-${12 + index}`}
+            >
+              <CardContent className="p-0">
+                <div className="w-full aspect-[3/4] overflow-hidden">
                   {member.image ? (
                     <img
                       src={member.image}
