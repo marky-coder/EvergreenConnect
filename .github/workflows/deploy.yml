@@ -20,24 +20,23 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+      
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-
+      
       - name: Install dependencies & build
         run: |
           npm install
           npm run build
-
+      
       - name: Upload build artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Evergreen Vite config: outDir = dist/public
           path: dist/public
-
+  
   deploy:
     needs: build
     runs-on: ubuntu-latest
