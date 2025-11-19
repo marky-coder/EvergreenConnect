@@ -1,6 +1,6 @@
 // client/src/pages/Home.tsx
 import { useEffect } from "react";
-import { useLocation } from "wouter";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 
 export default function Home() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Handle hash navigation on page load
   useEffect(() => {
@@ -51,20 +52,19 @@ export default function Home() {
                 Happy Clients
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground mb-8">
-                See what our satisfied clients have to say about their
-                experience with Evergreen Land Investments
+                See what our satisfied clients have to say about their experience with Evergreen Land Investments
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => setLocation("/testimonials")}
+                  onClick={() => navigate("/testimonials")}
                 >
                   View All Testimonials
                 </Button>
                 <Button
                   size="lg"
-                  onClick={() => setLocation("/get-offer")}
+                  onClick={() => navigate("/get-offer")}
                 >
                   Get Your Cash Offer
                 </Button>
