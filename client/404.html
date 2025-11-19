@@ -1,12 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <title>Evergreen Land Investments</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script>
+      (function () {
+        // Build the original path (pathname + search + hash)
+        var orig = location.pathname + location.search + location.hash;
+        // If your site is served from a subpath (e.g. /EvergreenConnect/),
+        // change '/' below to '/EvergreenConnect/' so the redirect goes to the right base.
+        var dest = "/" + "?p=" + encodeURIComponent(orig);
+        // Use replace so there is no extra history entry
+        location.replace(dest);
+      })();
+    </script>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    Redirecting...
   </body>
 </html>
