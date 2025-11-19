@@ -1,14 +1,16 @@
+// client/src/components/Header.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "./ThemeToggle";
 import { Menu, X } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "react-router-dom";
 import evergreenLogo from "@assets/evergreen-logo-removebg-preview_1761178576710.png";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [location, setLocation] = useLocation();
+  const location = useLocation(); // react-router location object
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,28 +23,30 @@ export default function Header() {
   const scrollToSection = (id: string, isPage?: boolean) => {
     setIsMobileMenuOpen(false);
 
-    // ✅ PAGE ROUTES → use SPA navigation (wouter), no full reload
+    // PAGE ROUTES → SPA navigation via react-router
     if (isPage) {
-      setLocation(`/${id}`); // e.g. "/get-offer", "/testimonials", "/closed-deals"
+      // navigate to the page route, e.g. "/testimonials"
+      navigate(`/${id}`);
       return;
     }
 
-    // ✅ SECTION SCROLLING
-    if (location === "/") {
+    // SECTION SCROLLING
+    if (location.pathname === "/") {
       // Already on homepage → smooth scroll to section
       const element = document.getElementById(id);
       element?.scrollIntoView({ behavior: "smooth" });
     } else {
-      // Go to homepage with hash → Home's useEffect will scroll
-      setLocation(`/#${id}`);
+      // Not on homepage → navigate to homepage with hash; Home's init will scroll
+      // Use react-router navigate to push a location with a hash
+      navigate(`/#${id}`);
     }
   };
 
   const goToHome = () => {
-    if (location === "/") {
+    if (location.pathname === "/") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      setLocation("/");
+      navigate("/");
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }, 100);
@@ -110,11 +114,7 @@ export default function Header() {
               data-testid="button-mobile-menu"
               aria-label="Toggle menu"
             >
-              {isMobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
