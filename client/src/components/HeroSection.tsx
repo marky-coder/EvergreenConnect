@@ -1,8 +1,12 @@
+// client/src/components/HeroSection.tsx
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@assets/generated_images/Forest_canopy_hero_background_d28caa10.png";
+import { useLocation } from "wouter";
 
 export default function HeroSection() {
+  const [, setLocation] = useLocation();
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     element?.scrollIntoView({ behavior: "smooth" });
@@ -30,10 +34,11 @@ export default function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            {/* Go to /get-offer using SPA routing */}
             <Button
               size="lg"
               className="text-base sm:text-lg px-8"
-              onClick={() => (window.location.href = "/get-offer")}
+              onClick={() => setLocation("/get-offer")}
               data-testid="button-schedule-call"
             >
               Get Your Free Cash Offer
