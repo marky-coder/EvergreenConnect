@@ -1,16 +1,14 @@
-// src/components/Header.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "./ThemeToggle";
 import { Menu, X } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import evergreenLogo from "@assets/evergreen-logo-removebg-preview_1761178576710.png";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [location, setLocation] = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,29 +21,31 @@ export default function Header() {
   const scrollToSection = (id: string, isPage?: boolean) => {
     setIsMobileMenuOpen(false);
 
+    // ✅ PAGE ROUTES → use SPA navigation (wouter), no full reload
     if (isPage) {
-      // Navigate to full pages like /testimonials, /get-offer, etc.
-      navigate(`/${id}`);
+      setLocation(`/${id}`); // e.g. "/get-offer", "/testimonials", "/closed-deals"
       return;
     }
 
-    // In-page sections (about, team, why-choose)
-    if (location.pathname === "/") {
+    // ✅ SECTION SCROLLING
+    if (location === "/") {
+      // Already on homepage → smooth scroll to section
       const element = document.getElementById(id);
       element?.scrollIntoView({ behavior: "smooth" });
     } else {
-      // Go to home with a hash; Home page already scrolls based on hash
-      navigate(`/#${id}`);
+      // Go to homepage with hash → Home's useEffect will scroll
+      setLocation(`/#${id}`);
     }
   };
 
   const goToHome = () => {
-    setIsMobileMenuOpen(false);
-
-    if (location.pathname === "/") {
+    if (location === "/") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      navigate("/");
+      setLocation("/");
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
     }
   };
 
