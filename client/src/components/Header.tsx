@@ -1,14 +1,16 @@
+// src/components/Header.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "./ThemeToggle";
 import { Menu, X } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "react-router-dom";
 import evergreenLogo from "@assets/evergreen-logo-removebg-preview_1761178576710.png";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [location, setLocation] = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,33 +24,28 @@ export default function Header() {
     setIsMobileMenuOpen(false);
 
     if (isPage) {
-      // ✅ SPA navigation for real pages (no full reload, no 404)
-      setLocation(`/${id}`);
+      // Navigate to full pages like /testimonials, /get-offer, etc.
+      navigate(`/${id}`);
       return;
     }
 
-    // Section scrolling on the homepage
-    if (location === "/") {
+    // In-page sections (about, team, why-choose)
+    if (location.pathname === "/") {
       const element = document.getElementById(id);
       element?.scrollIntoView({ behavior: "smooth" });
     } else {
-      // On a different page: go to homepage with hash
-      // This is okay to be a full load because it's hitting "/"
-      window.location.href = `/#${id}`;
+      // Go to home with a hash; Home page already scrolls based on hash
+      navigate(`/#${id}`);
     }
   };
 
   const goToHome = () => {
-    if (location === "/") {
-      // Already on homepage, scroll to top
+    setIsMobileMenuOpen(false);
+
+    if (location.pathname === "/") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      // Navigate to homepage via SPA
-      setLocation("/");
-      // Wait for navigation then scroll to top
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }, 100);
+      navigate("/");
     }
   };
 
