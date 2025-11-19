@@ -1,3 +1,4 @@
+// client/src/pages/Testimonials.tsx
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -12,6 +13,7 @@ import {
   Upload as UploadIcon,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 
 interface Testimonial {
   name: string;
@@ -41,6 +43,8 @@ export default function Testimonials() {
     VideoTestimonial[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   // Load all approved testimonials from API
   useEffect(() => {
@@ -121,9 +125,7 @@ export default function Testimonials() {
               <div className="flex justify-center gap-4">
                 <Button
                   size="lg"
-                  onClick={() =>
-                    (window.location.href = "/testimonials/upload")
-                  }
+                  onClick={() => navigate("/testimonials/upload")}
                   className="gap-2"
                 >
                   <UploadIcon className="w-5 h-5" />
@@ -194,11 +196,7 @@ export default function Testimonials() {
                     <p className="text-lg text-muted-foreground mb-4">
                       No written testimonials yet
                     </p>
-                    <Button
-                      onClick={() =>
-                        (window.location.href = "/testimonials/upload")
-                      }
-                    >
+                    <Button onClick={() => navigate("/testimonials/upload")}>
                       <UploadIcon className="w-4 h-4 mr-2" />
                       Share Your Experience
                     </Button>
@@ -223,11 +221,7 @@ export default function Testimonials() {
                     <p className="text-lg text-muted-foreground mb-4">
                       No video testimonials yet
                     </p>
-                    <Button
-                      onClick={() =>
-                        (window.location.href = "/testimonials/upload")
-                      }
-                    >
+                    <Button onClick={() => navigate("/testimonials/upload")}>
                       <UploadIcon className="w-4 h-4 mr-2" />
                       Be the First to Share
                     </Button>
@@ -240,18 +234,6 @@ export default function Testimonials() {
                         testimonial={testimonial}
                       />
                     ))}
-                  </div>
-                )}
-                {false && (
-                  <div className="text-center py-16">
-                    <Video className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-                    <h3 className="text-xl font-semibold text-foreground mb-2">
-                      Video Testimonials Coming Soon
-                    </h3>
-                    <p className="text-muted-foreground">
-                      We're collecting video testimonials from our happy
-                      clients. Check back soon!
-                    </p>
                   </div>
                 )}
               </TabsContent>
@@ -271,7 +253,8 @@ export default function Testimonials() {
             <Button
               size="lg"
               onClick={() => {
-                window.location.href = "/#contact";
+                // Navigate to the "Get Cash Offer" page (SPA navigation)
+                navigate("/get-offer");
               }}
             >
               Get Your Cash Offer
