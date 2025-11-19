@@ -1,11 +1,11 @@
-// client/src/components/HeroSection.tsx
+// src/components/HeroSection.tsx
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@assets/generated_images/Forest_canopy_hero_background_d28caa10.png";
-import { useLocation } from "wouter";
 
 export default function HeroSection() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -34,11 +34,10 @@ export default function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {/* Go to /get-offer using SPA routing */}
             <Button
               size="lg"
               className="text-base sm:text-lg px-8"
-              onClick={() => setLocation("/get-offer")}
+              onClick={() => navigate("/get-offer")}
               data-testid="button-schedule-call"
             >
               Get Your Free Cash Offer
