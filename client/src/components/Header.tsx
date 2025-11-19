@@ -22,18 +22,19 @@ export default function Header() {
     setIsMobileMenuOpen(false);
 
     if (isPage) {
-      // Navigate to a different page
-      window.location.href = `/${id}`;
+      // ✅ SPA navigation for real pages (no full reload, no 404)
+      setLocation(`/${id}`);
+      return;
+    }
+
+    // Section scrolling on the homepage
+    if (location === "/") {
+      const element = document.getElementById(id);
+      element?.scrollIntoView({ behavior: "smooth" });
     } else {
-      // Check if we're on the homepage
-      if (location === "/") {
-        // Already on homepage, just scroll
-        const element = document.getElementById(id);
-        element?.scrollIntoView({ behavior: "smooth" });
-      } else {
-        // On a different page, go to homepage with hash
-        window.location.href = `/#${id}`;
-      }
+      // On a different page: go to homepage with hash
+      // This is okay to be a full load because it's hitting "/"
+      window.location.href = `/#${id}`;
     }
   };
 
@@ -42,7 +43,7 @@ export default function Header() {
       // Already on homepage, scroll to top
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      // Navigate to homepage
+      // Navigate to homepage via SPA
       setLocation("/");
       // Wait for navigation then scroll to top
       setTimeout(() => {
