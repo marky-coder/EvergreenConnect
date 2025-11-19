@@ -1,8 +1,11 @@
+// client/src/pages/ClosedDeals.tsx
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { MapPin, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface DealLocation {
   id: string;
@@ -17,6 +20,7 @@ interface DealLocation {
 export default function ClosedDeals() {
   const [locations, setLocations] = useState<DealLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadLocations();
@@ -183,12 +187,14 @@ export default function ClosedDeals() {
             <p className="text-lg text-muted-foreground mb-6">
               Let us help you close a deal on your land property today
             </p>
-            <a
-              href="/#contact"
+
+            <Button
+              size="lg"
+              onClick={() => navigate("/get-offer")}
               className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
             >
               Get Your Cash Offer
-            </a>
+            </Button>
           </div>
         </div>
       </main>
