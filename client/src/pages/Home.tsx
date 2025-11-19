@@ -1,6 +1,6 @@
 // client/src/pages/Home.tsx
 import { useEffect } from "react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
@@ -15,17 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 
 export default function Home() {
+  const [, setLocation] = useLocation();
+
   // Handle hash navigation on page load
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
       const id = hash.replace("#", "");
-      // Wait for the page to render
       setTimeout(() => {
         const element = document.getElementById(id);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
+        element?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
   }, []);
@@ -55,21 +54,20 @@ export default function Home() {
                 See what our satisfied clients have to say about their
                 experience with Evergreen Land Investments
               </p>
-
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {/* View All Testimonials → use Wouter Link */}
-                <Link href="/testimonials">
-                  <Button size="lg" variant="outline">
-                    View All Testimonials
-                  </Button>
-                </Link>
-
-                {/* Get Your Cash Offer → use Wouter Link */}
-                <Link href="/get-offer">
-                  <Button size="lg">
-                    Get Your Cash Offer
-                  </Button>
-                </Link>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setLocation("/testimonials")}
+                >
+                  View All Testimonials
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={() => setLocation("/get-offer")}
+                >
+                  Get Your Cash Offer
+                </Button>
               </div>
             </div>
           </div>
