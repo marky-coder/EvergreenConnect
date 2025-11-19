@@ -1,4 +1,7 @@
+// client/src/pages/Home.tsx
 import { useEffect } from "react";
+import { Link } from "wouter";
+
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/AboutSection";
@@ -52,20 +55,21 @@ export default function Home() {
                 See what our satisfied clients have to say about their
                 experience with Evergreen Land Investments
               </p>
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  size="lg"
-                  onClick={() => (window.location.href = "/testimonials")}
-                  variant="outline"
-                >
-                  View All Testimonials
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={() => (window.location.href = "/get-offer")}
-                >
-                  Get Your Cash Offer
-                </Button>
+                {/* View All Testimonials → use Wouter Link */}
+                <Link href="/testimonials">
+                  <Button size="lg" variant="outline">
+                    View All Testimonials
+                  </Button>
+                </Link>
+
+                {/* Get Your Cash Offer → use Wouter Link */}
+                <Link href="/get-offer">
+                  <Button size="lg">
+                    Get Your Cash Offer
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
