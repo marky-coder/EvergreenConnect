@@ -1,75 +1,63 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { Link } from "wouter"; // ← add this
+import heroImage from "@assets/generated_images/Forest_canopy_hero_background_d28caa10.png";
 
-export default function ContactSection() {
+export default function HeroSection() {
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    element?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <section id="contact" className="py-16 md:py-24 lg:py-32 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            Contact Us
-          </h2>
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${heroImage})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/60" />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+            Welcome to Evergreen Land Investments
+          </h1>
+
+          <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
+            Quick and convenient cash offers for your property in any condition.
+            We skip the listing, commissions, and agents—putting more money in
+            your pocket.
+          </p>
+
+          {/* 🔧 FIXED CTA BUTTONS */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+
+            <Button size="lg" className="text-base sm:text-lg px-8" asChild>
+              <Link href="/get-offer">
+                <>
+                  Get Your Free Cash Offer
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              </Link>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-base sm:text-lg px-8 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
+              onClick={() => scrollToSection("about")}
+              data-testid="button-explore-services"
+            >
+              Learn More
+            </Button>
+          </div>
         </div>
+      </div>
 
-        {/* Contact Information Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
-                <Phone className="w-6 h-6" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Call Us</h3>
-              <a
-                href="tel:+19566006000"
-                className="text-primary hover:underline text-xl font-bold"
-              >
-                (956) 600-6000
-              </a>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
-                <Mail className="w-6 h-6" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Email Us</h3>
-              <a
-                href="mailto:info@evergreenlandinvestments.com"
-                className="text-primary hover:underline break-all"
-              >
-                info@evergreenlandinvestments.com
-              </a>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Location</h3>
-              <p className="text-muted-foreground">
-                McAllen, TX
-                <br />
-                Rio Grande Valley
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
-                <Clock className="w-6 h-6" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Hours</h3>
-              <p className="text-muted-foreground">
-                Mon-Fri: 9AM-6PM
-                <br />
-                Sat: 10AM-4PM
-              </p>
-            </CardContent>
-          </Card>
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
+          <div className="w-1.5 h-2 bg-white/70 rounded-full" />
         </div>
       </div>
     </section>
