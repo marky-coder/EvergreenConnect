@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import defaultData from "@/data/deals-locations.json";
 
 interface DealLocation {
   id: string;
@@ -20,6 +21,7 @@ interface DealLocation {
 export default function ClosedDeals() {
   const [locations, setLocations] = useState<DealLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [usedFallback, setUsedFallback] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,12 +31,28 @@ export default function ClosedDeals() {
   const loadLocations = async () => {
     try {
       const response = await fetch("/api/deals/locations");
-      const data = await response.json();
-      if (data.success) {
-        setLocations(data.locations);
+      if (response.ok) {
+        const data = await response.json();
+        if (data && Array.isArray(data.locations) && data.locations.length > 0) {
+          setLocations(data.locations);
+          setUsedFallback(false);
+        } else {
+          // API returned empty or unexpected result — use local data
+          console.warn("API returned no locations. Falling back to local data.");
+          setLocations(defaultData.locations);
+          setUsedFallback(true);
+        }
+      } else {
+        // Non-OK response (404, 500, etc.) — fallback
+        console.warn("API responded with status", response.status, " — using local data.");
+        setLocations(defaultData.locations);
+        setUsedFallback(true);
       }
-    } catch (error) {
-      console.error("Error loading locations:", error);
+    } catch (err) {
+      // Network or other error — fallback
+      console.error("Error fetching locations API — using local data.", err);
+      setLocations(defaultData.locations);
+      setUsedFallback(true);
     } finally {
       setIsLoading(false);
     }
@@ -43,17 +61,14 @@ export default function ClosedDeals() {
   // Convert lat/lng to SVG coordinates for the US map
   // US bounds: lat 24.5-49.4, lng -125 to -66.9
   const latLngToXY = (lat: number, lng: number) => {
-    // Map bounds in the SVG (approximate continental US area)
     const svgWidth = 1000;
     const svgHeight = 589;
 
-    // Geographic bounds (continental US)
     const minLng = -125;
     const maxLng = -66.9;
     const minLat = 24.5;
     const maxLat = 49.4;
 
-    // Convert to SVG coordinates
     const x = ((lng - minLng) / (maxLng - minLng)) * svgWidth;
     const y = ((maxLat - lat) / (maxLat - minLat)) * svgHeight;
 
@@ -71,8 +86,7 @@ export default function ClosedDeals() {
               Closed Deals Across America
             </h1>
             <p className="text-lg text-muted-foreground">
-              See where we've successfully helped landowners across the United
-              States
+              See where we've successfully helped landowners across the United States
             </p>
           </div>
 
@@ -96,13 +110,7 @@ export default function ClosedDeals() {
                     }}
                   >
                     {/* Background */}
-                    <rect
-                      x="0"
-                      y="0"
-                      width="1000"
-                      height="589"
-                      fill="#f3f4f6"
-                    />
+                    <rect x="0" y="0" width="1000" height="589" fill="#f3f4f6" />
 
                     {/* Use the US map as background image */}
                     <image
@@ -120,45 +128,20 @@ export default function ClosedDeals() {
                       return (
                         <g key={location.id}>
                           {/* Pin circle with pulsing animation */}
-                          <circle
-                            cx={x}
-                            cy={y}
-                            r="12"
-                            fill="#16a34a"
-                            opacity="0.3"
-                          >
-                            <animate
-                              attributeName="r"
-                              from="12"
-                              to="24"
-                              dur="2s"
-                              repeatCount="indefinite"
-                            />
-                            <animate
-                              attributeName="opacity"
-                              from="0.3"
-                              to="0"
-                              dur="2s"
-                              repeatCount="indefinite"
-                            />
+                          <circle cx={x} cy={y} r="12" fill="#16a34a" opacity="0.3">
+                            <animate attributeName="r" from="12" to="24" dur="2s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" from="0.3" to="0" dur="2s" repeatCount="indefinite" />
                           </circle>
+
                           {/* Main pin dot */}
-                          <circle
-                            cx={x}
-                            cy={y}
-                            r="8"
-                            fill="#16a34a"
-                            stroke="white"
-                            strokeWidth="2"
-                          />
+                          <circle cx={x} cy={y} r="8" fill="#16a34a" stroke="white" strokeWidth="2" />
+
                           {/* Tooltip on hover */}
                           <title>
                             {location.name ||
                               (location.city && location.state
                                 ? `${location.city}, ${location.state}`
-                                : `Deal Location (${location.lat.toFixed(
-                                    2
-                                  )}, ${location.lng.toFixed(2)})`)}
+                                : `Deal Location (${location.lat.toFixed(2)}, ${location.lng.toFixed(2)})`)}
                           </title>
                         </g>
                       );
@@ -170,10 +153,15 @@ export default function ClosedDeals() {
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <MapPin className="w-5 h-5 text-green-600" />
                     <span className="text-lg font-semibold">
-                      {locations.length}{" "}
-                      {locations.length === 1 ? "Deal" : "Deals"} Closed
+                      {locations.length} {locations.length === 1 ? "Deal" : "Deals"} Closed
                     </span>
                   </div>
+
+                  {usedFallback && (
+                    <div className="mt-4 text-sm text-yellow-700">
+                      Note: showing bundled locations because the server API was unavailable (fallback).
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
