@@ -30,6 +30,7 @@ export default function ClosedDeals() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [nudges, setNudges] = useState<Nudges>({});
   const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
+  const [isAdmin, setIsAdmin] = useState(false);
   const svgContainerRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
@@ -46,11 +47,14 @@ export default function ClosedDeals() {
     }
   }, []);
 
+  // On mount, load locations and admin status
   useEffect(() => {
     loadLocations();
+    checkAuthStatus();
     updateSvgSize();
     window.addEventListener("resize", updateSvgSize);
     return () => window.removeEventListener("resize", updateSvgSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateSvgSize = () => {
@@ -58,6 +62,22 @@ export default function ClosedDeals() {
     const width = container ? Math.min(1200, container.clientWidth) : 1000;
     const height = Math.round((width * 589) / 1000); // keep same aspect ratio as original
     setSvgSize({ width, height });
+  };
+
+  // Check admin session status (so we can hide edit controls from public)
+  const checkAuthStatus = async () => {
+    try {
+      const resp = await fetch("/api/admin/status", { credentials: "include" });
+      if (!resp.ok) {
+        setIsAdmin(false);
+        return;
+      }
+      const data = await resp.json();
+      setIsAdmin(Boolean(data?.isAdmin));
+    } catch (err) {
+      console.error("[ClosedDeals] admin status check failed:", err);
+      setIsAdmin(false);
+    }
   };
 
   // Helper: normalize location objects from many possible server shapes
@@ -158,7 +178,8 @@ export default function ClosedDeals() {
   }>({ draggingId: null, originMouseX: 0, originMouseY: 0 });
 
   const onPointerDown = (e: React.PointerEvent, id: string) => {
-    if (!isEditMode) return;
+    // Only permit pointer interactions when admin & edit mode
+    if (!isEditMode || !isAdmin) return;
     const target = e.currentTarget as HTMLElement;
     try {
       (target as any).setPointerCapture(e.pointerId);
@@ -171,7 +192,7 @@ export default function ClosedDeals() {
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!isEditMode) return;
+    if (!isEditMode || !isAdmin) return;
     if (!dragState.current.draggingId) return;
     const ds = dragState.current;
     const dx = e.clientX - ds.originMouseX;
@@ -193,7 +214,7 @@ export default function ClosedDeals() {
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
-    if (!isEditMode) return;
+    if (!isEditMode || !isAdmin) return;
     if (!dragState.current.draggingId) return;
     const target = e.currentTarget as HTMLElement;
     try {
@@ -203,10 +224,20 @@ export default function ClosedDeals() {
   };
 
   const toggleEditMode = () => {
+    // Only admins can toggle edit mode
+    if (!isAdmin) {
+      // redirect to admin login page
+      if (confirm("Edit Pins is admin-only. Go to admin login?")) navigate("/closed-deals/admin");
+      return;
+    }
     setIsEditMode((v) => !v);
   };
 
   const exportNudges = async () => {
+    if (!isAdmin) {
+      alert("Only admins can export nudges. Please login on the admin page.");
+      return;
+    }
     const text = JSON.stringify(nudges, null, 2);
     try {
       await navigator.clipboard.writeText(text);
@@ -218,6 +249,10 @@ export default function ClosedDeals() {
   };
 
   const clearNudges = () => {
+    if (!isAdmin) {
+      alert("Only admins can clear nudges. Please login on the admin page.");
+      return;
+    }
     if (!confirm("Clear all saved nudges (local offsets)? This cannot be undone locally).")) return;
     setNudges({});
     try {
@@ -243,21 +278,32 @@ export default function ClosedDeals() {
 
           <div className="flex items-center justify-between mb-4 gap-4">
             <div>
-              <Button size="sm" onClick={toggleEditMode}>
-                {isEditMode ? "Exit Edit Pins" : "Edit Pins"}
-              </Button>
-              <Button size="sm" variant="outline" className="ml-3" onClick={exportNudges}>
-                Export Nudges
-              </Button>
-              <Button size="sm" variant="destructive" className="ml-3" onClick={clearNudges}>
-                Clear Nudges
-              </Button>
+              {isAdmin ? (
+                <>
+                  <Button size="sm" onClick={toggleEditMode}>
+                    {isEditMode ? "Exit Edit Pins" : "Edit Pins"}
+                  </Button>
+                  <Button size="sm" variant="outline" className="ml-3" onClick={exportNudges}>
+                    Export Nudges
+                  </Button>
+                  <Button size="sm" variant="destructive" className="ml-3" onClick={clearNudges}>
+                    Clear Nudges
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" onClick={() => navigate("/closed-deals/admin")}>
+                    Admin Login
+                  </Button>
+                  <span className="ml-4 text-sm text-muted-foreground">Edit Pins are admin-only</span>
+                </>
+              )}
             </div>
 
             <div className="text-sm text-muted-foreground">
-              {isEditMode
+              {isEditMode && isAdmin
                 ? "Drag pins to adjust positions. Click Export Nudges to copy adjustments."
-                : "Toggle Edit Pins to adjust locations."}
+                : "Toggle Edit Pins to adjust locations (admin-only)."}
             </div>
           </div>
 
@@ -308,7 +354,7 @@ export default function ClosedDeals() {
                             fill="#16a34a"
                             stroke="white"
                             strokeWidth="2"
-                            style={{ cursor: isEditMode ? "grab" : "default", touchAction: "none" }}
+                            style={{ cursor: isEditMode && isAdmin ? "grab" : "default", touchAction: "none" }}
                             onPointerDown={(e) => onPointerDown(e, loc.id)}
                           />
 
