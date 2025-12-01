@@ -116,7 +116,7 @@ export default function Footer() {
                   href="tel:+13466413237"
                   className="hover:text-primary transition-colors font-semibold"
                 >
-                  (956) 600-6000
+                  (346) 641-3237
                 </a>
               </li>
               <li className="pt-2">
