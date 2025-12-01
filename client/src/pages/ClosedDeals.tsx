@@ -1,5 +1,5 @@
 // client/src/pages/ClosedDeals.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,15 +18,11 @@ interface DealLocation {
   addedAt: string;
 }
 
-type Nudges = Record<string, { dx: number; dy: number }>;
-const LOCAL_STORAGE_KEY = "closedDealsNudges_v1";
-const CLIENT_ONLY_FLAG = "closedDeals_clientOnlyAdmin_v1";
-
 /**
- * ClosedDeals page — robust pin placement:
- * - Measures the natural (intrinsic) size of /us.jpg and the uniform scale CSS uses,
- *   then maps lat/lng -> image coordinates and applies that scale so pins align perfectly.
- * - Keeps the "Enable Local Admin" button so you can edit in-browser if needed.
+ * ClosedDeals (static-only, no editing)
+ *
+ * - Shows pins for each location using the intrinsic size of /us.jpg for exact placement.
+ * - No edit controls, no nudges, no local admin flags.
  */
 
 export default function ClosedDeals() {
@@ -34,58 +30,37 @@ export default function ClosedDeals() {
   const [isLoading, setIsLoading] = useState(true);
   const [usedFallback, setUsedFallback] = useState(false);
   const [fallbackReason, setFallbackReason] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [nudges, setNudges] = useState<Nudges>({});
   const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isClientOnlyAdmin, setIsClientOnlyAdmin] = useState(false);
 
-  // image natural size
+  // store the natural size of the map image and the uniform scale used to render it
   const [imgNatural, setImgNatural] = useState({ width: 1000, height: 589 });
-  // image scale when drawn into the svg viewport (uniform scale like preserveAspectRatio="xMinYMin meet")
   const [imgScale, setImgScale] = useState(1);
 
-  const svgContainerRef = useRef<HTMLDivElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
   const navigate = useNavigate();
 
-  // Load nudges from localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (raw) setNudges(JSON.parse(raw));
-    } catch {}
-  }, []);
-
-  // On mount
   useEffect(() => {
     loadLocations();
-    checkAdminStatus();
     updateSvgSize();
     measureImage();
-    window.addEventListener("resize", () => {
+    const onResize = () => {
       updateSvgSize();
       measureImage();
-    });
-    return () => {
-      window.removeEventListener("resize", () => {
-        updateSvgSize();
-        measureImage();
-      });
     };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // update svg width/height to fill container (keeps aspect ratio)
+  // Keep the SVG size responsive to the container width
   const updateSvgSize = () => {
     const container = document.querySelector(".container") as HTMLElement | null;
     const width = container ? Math.min(1200, container.clientWidth) : 1000;
-    // keep original map aspect ratio from previous images (1000 x 589)
+    // Keep aspect ratio consistent with the original image (1000x589)
     const height = Math.round((width * 589) / 1000);
     setSvgSize({ width, height });
   };
 
-  // load / measure the actual /us.jpg natural size and compute scale used in svg
+  // Measure /us.jpg natural size and compute uniform scale used in the SVG
   const measureImage = () => {
     const img = new Image();
     img.src = "/us.jpg";
@@ -93,21 +68,19 @@ export default function ClosedDeals() {
       const naturalW = img.naturalWidth || 1000;
       const naturalH = img.naturalHeight || 589;
       setImgNatural({ width: naturalW, height: naturalH });
-
-      // compute uniform scale used when drawing the image into svg of size svgSize
-      // preserveAspectRatio="xMinYMin meet" => scale = min(svgWidth/naturalW, svgHeight/naturalH)
       const sx = svgSize.width / naturalW;
       const sy = svgSize.height / naturalH;
       const scale = Math.min(sx, sy);
       setImgScale(scale);
     };
     img.onerror = () => {
-      // fallback: keep defaults
+      // fallback defaults
       setImgNatural({ width: 1000, height: 589 });
       setImgScale(Math.min(svgSize.width / 1000, svgSize.height / 589));
     };
   };
 
+  // Normalize server/bundled location objects into our shape
   const normalizeLocation = (raw: any): DealLocation => {
     const id = raw.id ?? raw.name ?? `${raw.lat ?? raw.latitude}-${raw.lng ?? raw.lon ?? raw.longitude}`;
     const latVal = raw.lat ?? raw.latitude ?? raw.lat_deg ?? raw.latDeg;
@@ -126,20 +99,21 @@ export default function ClosedDeals() {
     };
   };
 
+  // Load locations from server if present, otherwise fallback to bundled JSON
   const loadLocations = async () => {
     setIsLoading(true);
     setFallbackReason(null);
     try {
-      const resp = await fetch("/api/deals/locations");
-      if (!resp.ok) {
-        // fallback to bundled static JSON
-        setFallbackReason(`Server responded ${resp.status} ${resp.statusText}`);
+      const response = await fetch("/api/deals/locations");
+      if (!response.ok) {
+        setFallbackReason(`Server responded ${response.status} ${response.statusText}`);
         setLocations(defaultData.locations.map(normalizeLocation));
         setUsedFallback(true);
         setIsLoading(false);
         return;
       }
-      const data = await resp.json();
+
+      const data = await response.json();
       let rawLocations: any[] | undefined = undefined;
       if (Array.isArray(data)) rawLocations = data;
       else if (Array.isArray(data?.locations)) rawLocations = data.locations;
@@ -162,128 +136,29 @@ export default function ClosedDeals() {
     }
   };
 
-  // If server admin not available, allow client-only admin via flag
-  const checkAdminStatus = async () => {
-    const clientFlag = localStorage.getItem(CLIENT_ONLY_FLAG) === "true";
-    if (clientFlag) {
-      setIsAdmin(true);
-      setIsClientOnlyAdmin(true);
-      return;
-    }
-    try {
-      const resp = await fetch("/api/admin/status", { credentials: "include" });
-      if (!resp.ok) {
-        setIsAdmin(false);
-        return;
-      }
-      const json = await resp.json();
-      setIsAdmin(Boolean(json?.isAdmin));
-    } catch {
-      setIsAdmin(false);
-    }
-  };
-
-  // Equirectangular mapping using the *natural image dimensions* and the uniform scale
+  // Map lat/lng to pixel coordinates using natural image size + uniform scale
+  // Geographic bounds for continental US (tweak if you need finer calibration)
   const latLngToXY = (lat: number, lng: number) => {
-    // Geographic bounds for continental US (approx)
     const minLng = -125;
     const maxLng = -66.9;
     const minLat = 24.5;
     const maxLat = 49.4;
 
-    // Use natural image size and compute pixel coords, then apply the uniform scale
     const imgW = imgNatural.width;
     const imgH = imgNatural.height;
 
+    // image-space pixel location
     const xImg = ((lng - minLng) / (maxLng - minLng)) * imgW;
     const yImg = ((maxLat - lat) / (maxLat - minLat)) * imgH;
 
-    // With preserveAspectRatio="xMinYMin meet" the image sits at top-left and is uniformly scaled by imgScale
+    // apply uniform scale used when drawing the image into the svg
     const x = xImg * imgScale;
     const y = yImg * imgScale;
 
-    // clamp to svg
     return {
       x: Math.max(0, Math.min(svgSize.width, x)),
       y: Math.max(0, Math.min(svgSize.height, y)),
     };
-  };
-
-  /******** Drag/edit logic (kept for convenience) *********/
-  const dragState = useRef<{ draggingId: string | null; originMouseX: number; originMouseY: number }>({ draggingId: null, originMouseX: 0, originMouseY: 0 });
-
-  const onPointerDown = (e: React.PointerEvent, id: string) => {
-    if (!isEditMode || !isAdmin) return;
-    const t = e.currentTarget as HTMLElement;
-    try { (t as any).setPointerCapture(e.pointerId); } catch {}
-    dragState.current = { draggingId: id, originMouseX: e.clientX, originMouseY: e.clientY };
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!isEditMode || !isAdmin) return;
-    if (!dragState.current.draggingId) return;
-    const ds = dragState.current;
-    const dx = e.clientX - ds.originMouseX;
-    const dy = e.clientY - ds.originMouseY;
-    setNudges((prev) => {
-      const next = { ...prev };
-      const curr = next[ds.draggingId!] || { dx: 0, dy: 0 };
-      next[ds.draggingId!] = { dx: curr.dx + dx, dy: curr.dy + dy };
-      try { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next)); } catch {}
-      dragState.current.originMouseX = e.clientX;
-      dragState.current.originMouseY = e.clientY;
-      return next;
-    });
-  };
-
-  const onPointerUp = () => {
-    if (!isEditMode || !isAdmin) return;
-    dragState.current.draggingId = null;
-  };
-
-  // Toggle edit mode; if not admin user can enable local admin
-  const toggleEditMode = () => {
-    if (!isAdmin) {
-      alert("Editing pins requires admin. If you control this site you can enable local admin with the button next to Edit Pins.");
-      return;
-    }
-    setIsEditMode((v) => !v);
-  };
-
-  const enableClientOnlyAdmin = () => {
-    if (!confirm("Enable LOCAL admin mode in this browser (local-only changes)?")) return;
-    localStorage.setItem(CLIENT_ONLY_FLAG, "true");
-    setIsAdmin(true);
-    setIsClientOnlyAdmin(true);
-    location.reload();
-  };
-
-  const exportNudges = async () => {
-    if (!isAdmin) { alert("Only admins can export nudges."); return; }
-    const data = JSON.stringify(nudges, null, 2);
-    try {
-      await navigator.clipboard.writeText(data);
-      alert("Nudges copied to clipboard.");
-    } catch {
-      const blob = new Blob([data], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "closed-deals-nudges.json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      alert("Downloaded nudges JSON.");
-    }
-  };
-
-  const clearNudges = () => {
-    if (!isAdmin) { alert("Only admins can clear nudges."); return; }
-    if (!confirm("Clear all saved nudges (local offsets)?")) return;
-    setNudges({});
-    try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch {}
-    alert("Nudges cleared locally.");
   };
 
   return (
@@ -299,71 +174,55 @@ export default function ClosedDeals() {
 
           <div className="flex items-center justify-between mb-4 gap-4">
             <div>
-              <Button size="sm" onClick={toggleEditMode}>{isEditMode ? "Exit Edit Pins" : "Edit Pins"}</Button>
-              <Button size="sm" variant="outline" className="ml-3" onClick={exportNudges}>Export Nudges</Button>
-              <Button size="sm" variant="destructive" className="ml-3" onClick={clearNudges}>Clear Nudges</Button>
-              {!isAdmin && (
-                <Button size="sm" variant="secondary" className="ml-3" onClick={enableClientOnlyAdmin}>Enable Local Admin</Button>
-              )}
+              {/* All edit controls removed — static-only */}
             </div>
 
-            <div className="text-sm text-muted-foreground">{isEditMode && isAdmin ? "Drag pins to adjust positions." : "Toggle Edit Pins to adjust locations (admin-only)."}</div>
+            <div className="text-sm text-muted-foreground">Map is static — pins are placed from bundled locations.</div>
           </div>
 
-          {isClientOnlyAdmin && (
-            <div className="mb-4 text-center text-yellow-600">You are in <strong>local admin mode</strong>. Changes are local-only — export and commit to repo to persist.</div>
-          )}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <Card className="max-w-6xl mx-auto">
+              <CardContent className="p-6">
+                <div className="relative w-full" style={{ paddingBottom: "60%" }}>
+                  <svg viewBox={`0 0 ${svgSize.width} ${svgSize.height}`} className="absolute inset-0 w-full h-full" style={{ background: "#f3f4f6", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }}>
+                    <image href="/us.jpg" x="0" y="0" width={svgSize.width} height={svgSize.height} preserveAspectRatio="xMinYMin meet" />
 
-          <Card className="max-w-6xl mx-auto">
-            <CardContent className="p-6">
-              <div className="relative w-full" style={{ paddingBottom: "60%" }}>
-                {/* SVG sized to fill container; image drawn top-left using preserveAspectRatio so scaling is predictable */}
-                <svg viewBox={`0 0 ${svgSize.width} ${svgSize.height}`} className="absolute inset-0 w-full h-full" style={{ background: "#f3f4f6" }} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}>
-                  <image
-                    ref={imgRef as any}
-                    href="/us.jpg"
-                    x="0"
-                    y="0"
-                    width={svgSize.width}
-                    height={svgSize.height}
-                    preserveAspectRatio="xMinYMin meet"
-                  />
-
-                  {locations.map((loc) => {
-                    const base = latLngToXY(loc.lat, loc.lng);
-                    const n = nudges[loc.id] || { dx: 0, dy: 0 };
-                    const x = base.x + n.dx;
-                    const y = base.y + n.dy;
-                    return (
-                      <g key={loc.id}>
-                        <circle cx={x} cy={y} r="12" fill="#16a34a" opacity="0.28" />
-                        <circle cx={x} cy={y} r="8" fill="#16a34a" stroke="white" strokeWidth="2"
-                          style={{ cursor: isEditMode && isAdmin ? "grab" : "default", touchAction: "none" }}
-                          onPointerDown={(e) => onPointerDown(e, loc.id)}
-                        />
-                        <title>{loc.name || (loc.city && loc.state ? `${loc.city}, ${loc.state}` : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}</title>
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-
-              <div className="mt-6 text-center">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                  <MapPin className="w-5 h-5 text-green-600" />
-                  <span className="text-lg font-semibold">{locations.length} {locations.length === 1 ? "Deal" : "Deals"} Closed</span>
+                    {locations.map((loc) => {
+                      const { x, y } = latLngToXY(loc.lat, loc.lng);
+                      return (
+                        <g key={loc.id}>
+                          <circle cx={x} cy={y} r="12" fill="#16a34a" opacity="0.28" />
+                          <circle cx={x} cy={y} r="8" fill="#16a34a" stroke="white" strokeWidth="2" />
+                          <title>
+                            {loc.name || (loc.city && loc.state ? `${loc.city}, ${loc.state}` : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}
+                          </title>
+                        </g>
+                      );
+                    })}
+                  </svg>
                 </div>
 
-                {usedFallback && (
-                  <div className="mt-4 text-sm text-yellow-700">
-                    <div>Note: showing bundled locations because the server API was unavailable (fallback).</div>
-                    {fallbackReason && <div className="mt-1 text-xs text-yellow-800">Reason: {fallbackReason}</div>}
-                    <div className="mt-2 text-xs text-muted-foreground">Check the server route <code>/api/deals/locations</code> (should return JSON). See console for details.</div>
+                <div className="mt-6 text-center">
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <MapPin className="w-5 h-5 text-green-600" />
+                    <span className="text-lg font-semibold">{locations.length} {locations.length === 1 ? "Deal" : "Deals"} Closed</span>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+
+                  {usedFallback && (
+                    <div className="mt-4 text-sm text-yellow-700">
+                      <div>Note: showing bundled locations because the server API was unavailable (fallback).</div>
+                      {fallbackReason && <div className="mt-1 text-xs text-yellow-800">Reason: {fallbackReason}</div>}
+                      <div className="mt-2 text-xs text-muted-foreground">This page is static — to edit locations edit <code>client/src/data/deals-locations.json</code> in the repository.</div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="text-center mt-12 max-w-2xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Ready to Join Them?</h2>
