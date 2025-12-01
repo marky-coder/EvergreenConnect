@@ -22,6 +22,11 @@ type Nudges = Record<string, { dx: number; dy: number }>;
 const LOCAL_STORAGE_KEY = "closedDealsNudges_v1";
 const CLIENT_ONLY_FLAG = "closedDeals_clientOnlyAdmin_v1";
 
+/**
+ * ClosedDeals page with in-page admin modal.
+ * - Shows an in-page modal when user clicks "Edit Pins" and is not admin.
+ * - Tries SPA navigate, then falls back to full page navigation respecting <base href>.
+ */
 export default function ClosedDeals() {
   const [locations, setLocations] = useState<DealLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,22 +35,19 @@ export default function ClosedDeals() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [nudges, setNudges] = useState<Nudges>({});
   const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
   const svgContainerRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Load nudges
+  // Load nudges from localStorage
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (raw) {
-        const parsed: Nudges = JSON.parse(raw);
-        setNudges(parsed);
-      }
+      if (raw) setNudges(JSON.parse(raw));
     } catch {}
   }, []);
 
-  // On mount load locations and admin status (server or client-only)
   useEffect(() => {
     loadLocations();
     checkAdminStatus();
@@ -94,13 +96,13 @@ export default function ClosedDeals() {
         return;
       }
       const data = await response.json();
-      let rawLocations: any[] | undefined;
+      let rawLocations: any[] | undefined = undefined;
       if (Array.isArray(data)) rawLocations = data;
       else if (Array.isArray(data?.locations)) rawLocations = data.locations;
       else if (Array.isArray(data?.data?.locations)) rawLocations = data.data.locations;
+
       if (rawLocations && rawLocations.length > 0) {
-        const normalized = rawLocations.map(normalizeLocation);
-        setLocations(normalized);
+        setLocations(rawLocations.map(normalizeLocation));
         setUsedFallback(false);
       } else {
         setFallbackReason("API returned no locations");
@@ -116,9 +118,8 @@ export default function ClosedDeals() {
     }
   };
 
-  // Check admin status: server-side or client-only flag
+  // Check admin state: server-side or client-only flag
   const checkAdminStatus = async () => {
-    // client-only admin overrides
     const clientFlag = localStorage.getItem(CLIENT_ONLY_FLAG) === "true";
     if (clientFlag) {
       setIsAdmin(true);
@@ -138,7 +139,7 @@ export default function ClosedDeals() {
     }
   };
 
-  // Equirectangular mapping
+  // Simple equirectangular mapping
   const latLngToXY = (lat: number, lng: number) => {
     const { width: svgWidth, height: svgHeight } = svgSize;
     const minLng = -125;
@@ -177,47 +178,64 @@ export default function ClosedDeals() {
     });
   };
 
-  const onPointerUp = (e: React.PointerEvent) => {
+  const onPointerUp = () => {
     if (!isEditMode || !isAdmin) return;
     dragState.current.draggingId = null;
   };
 
+  // NEW: open modal instead of using browser confirm
   const toggleEditMode = () => {
-    // If the visitor is not an admin, prompt and then reliably go to admin login.
     if (!isAdmin) {
-      const go = confirm("Edit Pins is admin-only. Go to admin login?");
-      if (go) {
-        const adminPath = "/closed-deals/admin";
-        // Try client-side navigate first (SPA). If that doesn't change the path shortly,
-        // force a full page navigation which works on static/CDN hosts.
-        try {
-          navigate(adminPath);
-          setTimeout(() => {
-            if (window.location.pathname !== adminPath) {
-              // force load the admin route
-              window.location.assign(adminPath);
-            }
-          }, 60);
-        } catch {
-          window.location.assign(adminPath);
-        }
-      }
+      setShowAdminModal(true);
       return;
     }
     setIsEditMode((v) => !v);
   };
 
-  const exportNudges = async () => {
-    if (!isAdmin) {
-      alert("Only admins can export nudges. Please login on the admin page.");
-      return;
+  // Go to admin: SPA navigate then fallback to full-page assign
+  const goToAdmin = () => {
+    const spaPath = "/closed-deals/admin";
+    try {
+      navigate(spaPath);
+    } catch {
+      // ignore
     }
+
+    // after a short delay, if SPA didn't move to the admin path, force a page load
+    setTimeout(() => {
+      if (!window.location.pathname.endsWith(spaPath)) {
+        // Respect <base href> if present (useful for repo subpath hosting)
+        const baseEl = document.querySelector("base");
+        let baseHref = "";
+        if (baseEl) {
+          baseHref = baseEl.getAttribute("href") || "";
+        }
+        // If no base tag, try to infer repo base as the first path segment if site runs under /repo-name/
+        if (!baseHref) {
+          const parts = window.location.pathname.split("/");
+          // parts[0] === "" for leading slash
+          if (parts.length > 1 && parts[1] && parts[1] !== "closed-deals") {
+            baseHref = `/${parts[1]}`;
+          } else {
+            baseHref = "";
+          }
+        }
+        const adminUrl = (baseHref.replace(/\/$/, "") || "") + spaPath;
+        // If adminUrl is relative (starts without slash), make it absolute relative to origin
+        const url = adminUrl.startsWith("/") ? `${window.location.origin}${adminUrl}` : `${window.location.href.replace(/\/$/, "")}/${adminUrl}`;
+        window.location.assign(url);
+      }
+    }, 80);
+  };
+
+  const exportNudges = async () => {
+    if (!isAdmin) { alert("Only admins can export nudges. Please login."); return; }
     const text = JSON.stringify(nudges, null, 2);
-    try { await navigator.clipboard.writeText(text); alert("Nudges copied to clipboard."); } catch { console.log(text); alert("Exported to console."); }
+    try { await navigator.clipboard.writeText(text); alert("Nudges copied to clipboard."); } catch { console.log(text); alert("Copied to console."); }
   };
 
   const clearNudges = () => {
-    if (!isAdmin) { alert("Only admins can clear nudges. Please login on the admin page."); return; }
+    if (!isAdmin) { alert("Only admins can clear nudges."); return; }
     if (!confirm("Clear all saved nudges?")) return;
     setNudges({});
     try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch {}
@@ -227,41 +245,83 @@ export default function ClosedDeals() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+
       <main className="flex-1 py-16 md:py-24 lg:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-6">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-2">Closed Deals Across America</h1>
-            <p className="text-lg text-muted-foreground">See where we've successfully helped landowners across the United States</p>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-2">
+              Closed Deals Across America
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              See where we've successfully helped landowners across the United States
+            </p>
           </div>
 
           <div className="flex items-center justify-between mb-4 gap-4">
             <div>
-              <Button size="sm" onClick={toggleEditMode}>{isEditMode ? "Exit Edit Pins" : "Edit Pins"}</Button>
-              <Button size="sm" variant="outline" className="ml-3" onClick={exportNudges}>Export Nudges</Button>
-              <Button size="sm" variant="destructive" className="ml-3" onClick={clearNudges}>Clear Nudges</Button>
+              <Button size="sm" onClick={toggleEditMode}>
+                {isEditMode ? "Exit Edit Pins" : "Edit Pins"}
+              </Button>
+              <Button size="sm" variant="outline" className="ml-3" onClick={exportNudges}>
+                Export Nudges
+              </Button>
+              <Button size="sm" variant="destructive" className="ml-3" onClick={clearNudges}>
+                Clear Nudges
+              </Button>
             </div>
 
-            <div className="text-sm text-muted-foreground">{isEditMode && isAdmin ? "Drag pins to adjust positions." : "Toggle Edit Pins to adjust locations (admin-only)."}</div>
+            <div className="text-sm text-muted-foreground">
+              {isEditMode && isAdmin ? "Drag pins to adjust positions." : "Toggle Edit Pins to adjust locations (admin-only)."}
+            </div>
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
           ) : (
             <Card className="max-w-6xl mx-auto">
               <CardContent className="p-6">
-                <div className="relative w-full" style={{ paddingBottom: "60%" }}>
-                  <svg viewBox={`0 0 ${svgSize.width} ${svgSize.height}`} className="absolute inset-0 w-full h-full" style={{ background: "#f3f4f6", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}>
-                    <image href="/us.jpg" x="0" y="0" width={svgSize.width} height={svgSize.height} preserveAspectRatio="xMinYMin meet" />
+                <div ref={svgContainerRef} className="relative w-full" style={{ paddingBottom: "60%" }}>
+                  <svg
+                    viewBox={`0 0 ${svgSize.width} ${svgSize.height}`}
+                    className="absolute inset-0 w-full h-full"
+                    style={{ background: "#f3f4f6", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerLeave={onPointerUp}
+                  >
+                    <image
+                      href="/us.jpg"
+                      x="0"
+                      y="0"
+                      width={svgSize.width}
+                      height={svgSize.height}
+                      preserveAspectRatio="xMinYMin meet"
+                    />
+
                     {locations.map((loc) => {
                       const base = latLngToXY(loc.lat, loc.lng);
                       const n = nudges[loc.id] || { dx: 0, dy: 0 };
                       const x = base.x + n.dx;
                       const y = base.y + n.dy;
+
                       return (
                         <g key={loc.id}>
                           <circle cx={x} cy={y} r="12" fill="#16a34a" opacity="0.28" />
-                          <circle cx={x} cy={y} r="8" fill="#16a34a" stroke="white" strokeWidth="2" style={{ cursor: isEditMode && isAdmin ? "grab" : "default", touchAction: "none" }} onPointerDown={(e) => onPointerDown(e, loc.id)} />
-                          <title>{loc.name || (loc.city && loc.state ? `${loc.city}, ${loc.state}` : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}</title>
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r="8"
+                            fill="#16a34a"
+                            stroke="white"
+                            strokeWidth="2"
+                            style={{ cursor: isEditMode && isAdmin ? "grab" : "default", touchAction: "none" }}
+                            onPointerDown={(e) => onPointerDown(e, loc.id)}
+                          />
+                          <title>
+                            {loc.name || (loc.city && loc.state ? `${loc.city}, ${loc.state}` : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}
+                          </title>
                         </g>
                       );
                     })}
@@ -271,14 +331,18 @@ export default function ClosedDeals() {
                 <div className="mt-6 text-center">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <MapPin className="w-5 h-5 text-green-600" />
-                    <span className="text-lg font-semibold">{locations.length} {locations.length === 1 ? "Deal" : "Deals"} Closed</span>
+                    <span className="text-lg font-semibold">
+                      {locations.length} {locations.length === 1 ? "Deal" : "Deals"} Closed
+                    </span>
                   </div>
 
                   {usedFallback && (
                     <div className="mt-4 text-sm text-yellow-700">
                       <div>Note: showing bundled locations because the server API was unavailable (fallback).</div>
                       {fallbackReason && <div className="mt-1 text-xs text-yellow-800">Reason: {fallbackReason}</div>}
-                      <div className="mt-2 text-xs text-muted-foreground">Check the server route <code>/api/deals/locations</code> (should return JSON). See console for details.</div>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Check the server route <code>/api/deals/locations</code> (should return JSON). See console for details.
+                      </div>
                     </div>
                   )}
                 </div>
@@ -289,11 +353,35 @@ export default function ClosedDeals() {
           <div className="text-center mt-12 max-w-2xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Ready to Join Them?</h2>
             <p className="text-lg text-muted-foreground mb-6">Let us help you close a deal on your land property today</p>
-            <Button size="lg" onClick={() => navigate("/get-offer")}>Get Your Cash Offer</Button>
+
+            <Button size="lg" onClick={() => navigate("/get-offer")}>
+              Get Your Cash Offer
+            </Button>
           </div>
         </div>
       </main>
+
       <Footer />
+
+      {/* In-page admin modal */}
+      {showAdminModal && (
+        <div style={{
+          position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 60, background: "rgba(0,0,0,0.45)"
+        }}>
+          <div style={{
+            width: 420, maxWidth: "92%", background: "white", borderRadius: 10, padding: 20,
+            boxShadow: "0 8px 30px rgba(0,0,0,0.35)"
+          }}>
+            <h3 style={{ margin: 0, marginBottom: 8, fontSize: 18 }}>Admin required</h3>
+            <p style={{ marginTop: 0, marginBottom: 16, color: "#374151" }}>Edit Pins is admin-only. Go to admin login?</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button onClick={() => setShowAdminModal(false)} style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff" }}>Cancel</button>
+              <button onClick={() => { setShowAdminModal(false); goToAdmin(); }} style={{ padding: "8px 14px", borderRadius: 6, background: "#e11d48", color: "white", border: "none" }}>Go to admin</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
