@@ -19,17 +19,15 @@ interface DealLocation {
 }
 
 /**
- * ClosedDeals (static-only, no editing)
+ * ClosedDeals (static-only, no editing, no fallback notice)
  *
  * - Shows pins for each location using the intrinsic size of /us.jpg for exact placement.
- * - No edit controls, no nudges, no local admin flags.
+ * - Does not display the "showing bundled locations (fallback)" message.
  */
 
 export default function ClosedDeals() {
   const [locations, setLocations] = useState<DealLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [usedFallback, setUsedFallback] = useState(false);
-  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
   const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
 
   // store the natural size of the map image and the uniform scale used to render it
@@ -55,12 +53,12 @@ export default function ClosedDeals() {
   const updateSvgSize = () => {
     const container = document.querySelector(".container") as HTMLElement | null;
     const width = container ? Math.min(1200, container.clientWidth) : 1000;
-    // Keep aspect ratio consistent with the original image (1000x589)
+    // keep original map aspect ratio (1000 x 589)
     const height = Math.round((width * 589) / 1000);
     setSvgSize({ width, height });
   };
 
-  // Measure /us.jpg natural size and compute uniform scale used in the SVG
+  // Load and measure the actual /us.jpg natural size and compute uniform scale used in the SVG
   const measureImage = () => {
     const img = new Image();
     img.src = "/us.jpg";
@@ -99,20 +97,18 @@ export default function ClosedDeals() {
     };
   };
 
-  // Load locations from server if present, otherwise fallback to bundled JSON
+  // Load locations from server if present; otherwise fallback to bundled JSON.
+  // (We still fall back — but we intentionally do not show a UI message about it.)
   const loadLocations = async () => {
     setIsLoading(true);
-    setFallbackReason(null);
     try {
       const response = await fetch("/api/deals/locations");
       if (!response.ok) {
-        setFallbackReason(`Server responded ${response.status} ${response.statusText}`);
+        // fallback to bundled static JSON quietly
         setLocations(defaultData.locations.map(normalizeLocation));
-        setUsedFallback(true);
         setIsLoading(false);
         return;
       }
-
       const data = await response.json();
       let rawLocations: any[] | undefined = undefined;
       if (Array.isArray(data)) rawLocations = data;
@@ -121,37 +117,33 @@ export default function ClosedDeals() {
 
       if (rawLocations && rawLocations.length > 0) {
         setLocations(rawLocations.map(normalizeLocation));
-        setUsedFallback(false);
       } else {
-        setFallbackReason("API returned no locations");
+        // fallback quietly
         setLocations(defaultData.locations.map(normalizeLocation));
-        setUsedFallback(true);
       }
-    } catch (err: any) {
-      setFallbackReason(String(err?.message ?? err));
+    } catch (_err) {
+      // network error, use static bundled file silently
       setLocations(defaultData.locations.map(normalizeLocation));
-      setUsedFallback(true);
     } finally {
       setIsLoading(false);
     }
   };
 
   // Map lat/lng to pixel coordinates using natural image size + uniform scale
-  // Geographic bounds for continental US (tweak if you need finer calibration)
   const latLngToXY = (lat: number, lng: number) => {
+    // Geographic bounds for continental US (approx)
     const minLng = -125;
     const maxLng = -66.9;
     const minLat = 24.5;
     const maxLat = 49.4;
 
+    // Use natural image size and compute pixel coords, then apply scale
     const imgW = imgNatural.width;
     const imgH = imgNatural.height;
 
-    // image-space pixel location
     const xImg = ((lng - minLng) / (maxLng - minLng)) * imgW;
     const yImg = ((maxLat - lat) / (maxLat - minLat)) * imgH;
 
-    // apply uniform scale used when drawing the image into the svg
     const x = xImg * imgScale;
     const y = yImg * imgScale;
 
@@ -173,11 +165,9 @@ export default function ClosedDeals() {
           </div>
 
           <div className="flex items-center justify-between mb-4 gap-4">
-            <div>
-              {/* All edit controls removed — static-only */}
-            </div>
+            <div>{/* static site — no edit controls */}</div>
 
-            <div className="text-sm text-muted-foreground">Map is static — pins are placed from bundled locations.</div>
+            <div className="text-sm text-muted-foreground">Map is static — pins are taken from bundled locations.</div>
           </div>
 
           {isLoading ? (
@@ -190,16 +180,13 @@ export default function ClosedDeals() {
                 <div className="relative w-full" style={{ paddingBottom: "60%" }}>
                   <svg viewBox={`0 0 ${svgSize.width} ${svgSize.height}`} className="absolute inset-0 w-full h-full" style={{ background: "#f3f4f6", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }}>
                     <image href="/us.jpg" x="0" y="0" width={svgSize.width} height={svgSize.height} preserveAspectRatio="xMinYMin meet" />
-
                     {locations.map((loc) => {
                       const { x, y } = latLngToXY(loc.lat, loc.lng);
                       return (
                         <g key={loc.id}>
                           <circle cx={x} cy={y} r="12" fill="#16a34a" opacity="0.28" />
                           <circle cx={x} cy={y} r="8" fill="#16a34a" stroke="white" strokeWidth="2" />
-                          <title>
-                            {loc.name || (loc.city && loc.state ? `${loc.city}, ${loc.state}` : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}
-                          </title>
+                          <title>{loc.name || (loc.city && loc.state ? `${loc.city}, ${loc.state}` : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}</title>
                         </g>
                       );
                     })}
@@ -212,13 +199,9 @@ export default function ClosedDeals() {
                     <span className="text-lg font-semibold">{locations.length} {locations.length === 1 ? "Deal" : "Deals"} Closed</span>
                   </div>
 
-                  {usedFallback && (
-                    <div className="mt-4 text-sm text-yellow-700">
-                      <div>Note: showing bundled locations because the server API was unavailable (fallback).</div>
-                      {fallbackReason && <div className="mt-1 text-xs text-yellow-800">Reason: {fallbackReason}</div>}
-                      <div className="mt-2 text-xs text-muted-foreground">This page is static — to edit locations edit <code>client/src/data/deals-locations.json</code> in the repository.</div>
-                    </div>
-                  )}
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    This page is static — to edit locations update <code>client/src/data/deals-locations.json</code> in the repository.
+                  </div>
                 </div>
               </CardContent>
             </Card>
