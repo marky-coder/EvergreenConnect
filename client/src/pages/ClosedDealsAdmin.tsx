@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Loader2, Lock, Trash2, Info } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
+import defaultData from "@/data/deals-locations.json";
 
 interface DealLocation {
   id: string;
@@ -19,9 +21,27 @@ interface DealLocation {
   addedAt: string;
 }
 
+const ADMIN_PASSWORD_CLIENT = "VitaTalent2025!";
+const CLIENT_ONLY_FLAG = "closedDeals_clientOnlyAdmin_v1";
+
+/**
+ * ClosedDealsAdmin
+ *
+ * This admin page supports two modes:
+ *  - server-backed admin: tries to POST to /api/admin/login and then uses credentials:include to
+ *    add/delete/edit locations on the server (normal mode).
+ *  - client-only admin: if the POST to /api/admin/login fails with a 405 or network error,
+ *    we fall back to a local-only admin mode that keeps changes in memory and allows you to
+ *    export a JSON file you can paste into the repo at:
+ *      https://github.com/marky-coder/EvergreenConnect/edit/main/client/src/data/deals-locations.json
+ *
+ * The client-only mode is useful when the site is hosted statically (GitHub Pages / CDN) and
+ * the origin refuses POSTs. It keeps everything on GitHub (no new host required).
+ */
 export default function ClosedDealsAdmin() {
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isClientOnlyAdmin, setIsClientOnlyAdmin] = useState(false);
   const [password, setPassword] = useState("");
   const [locations, setLocations] = useState<DealLocation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,102 +50,141 @@ export default function ClosedDealsAdmin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // include session cookie
-        body: JSON.stringify({ password }),
-      });
-
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setIsAuthenticated(true);
-        setPassword("");
-        toast({
-          title: "✅ Access Granted",
-          description: "You can now manage deal locations",
-        });
-        loadLocations();
-      } else {
-        toast({
-          title: "❌ Access Denied",
-          description: data?.error || "Incorrect password",
-          variant: "destructive",
-        });
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      toast({
-        title: "❌ Error",
-        description: "Login failed",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const checkAuthStatus = async () => {
-    try {
-      const resp = await fetch("/api/admin/status", { credentials: "include" });
-      const data = await resp.json();
-      if (resp.ok && data.isAdmin) {
-        setIsAuthenticated(true);
-        loadLocations();
-      } else {
-        setIsAuthenticated(false);
-      }
-    } catch (err) {
-      console.error("Auth status error:", err);
-    }
-  };
-
+  // Load locations from server if available, otherwise from bundled data
   const loadLocations = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/deals/locations");
-      const data = await response.json();
-      if (data && Array.isArray(data.locations)) {
-        setLocations(data.locations);
-      } else if (Array.isArray(data)) {
-        setLocations(data);
+      const resp = await fetch("/api/deals/locations");
+      if (resp.ok) {
+        const data = await resp.json();
+        if (Array.isArray(data?.locations)) setLocations(data.locations);
+        else if (Array.isArray(data)) setLocations(data);
+        else setLocations(defaultData.locations);
       } else {
-        setLocations([]);
+        // if server returns 404/500, fallback to bundled
+        setLocations(defaultData.locations);
       }
-    } catch (error) {
-      console.error("Error loading locations:", error);
-      toast({
-        title: "❌ Error",
-        description: "Failed to load deal locations",
-        variant: "destructive",
-      });
+    } catch (err) {
+      // network error, fallback
+      setLocations(defaultData.locations);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    checkAuthStatus();
+    // if client-only flag present, treat user as client-only admin
+    const flag = localStorage.getItem(CLIENT_ONLY_FLAG);
+    if (flag === "true") {
+      setIsClientOnlyAdmin(true);
+      setIsAuthenticated(true);
+      // load locations from bundled (or optionally from repo)
+      setLocations(defaultData.locations);
+    } else {
+      loadLocations();
+      // also check server auth status
+      checkAuthStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleMapClick = async (e: React.MouseEvent<SVGSVGElement>) => {
-    // allow only when authenticated (server also enforces)
-    if (!isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "Please login to add deal locations",
-        variant: "destructive",
+  const checkAuthStatus = async () => {
+    try {
+      const resp = await fetch("/api/admin/status", { credentials: "include" });
+      if (!resp.ok) {
+        setIsAuthenticated(false);
+        return;
+      }
+      const json = await resp.json();
+      if (json?.isAdmin) {
+        setIsAuthenticated(true);
+        setIsClientOnlyAdmin(false);
+        loadLocations();
+      } else {
+        setIsAuthenticated(false);
+      }
+    } catch (err) {
+      setIsAuthenticated(false);
+    }
+  };
+
+  const tryServerLogin = async (pw: string) => {
+    try {
+      const resp = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ password: pw }),
       });
+
+      // If origin returns 405, it is a static host / CDN — fallback
+      if (resp.status === 405) {
+        return { ok: false, status: 405 };
+      }
+
+      // If network failed, this will throw earlier
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        return { ok: false, status: resp.status, data };
+      }
+
+      const data = await resp.json();
+      if (data?.success) return { ok: true, status: resp.status, data };
+      return { ok: false, status: resp.status, data };
+    } catch (err: any) {
+      // network error (e.g. blocked by CDN), return as failure
+      return { ok: false, status: 0, error: String(err?.message ?? err) };
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // try server login first
+    const result = await tryServerLogin(password);
+
+    if (result.ok) {
+      setIsAuthenticated(true);
+      setIsClientOnlyAdmin(false);
+      setPassword("");
+      toast({ title: "✅ Access Granted", description: "You are logged in as admin (server mode)." });
+      // refresh locations from server
+      await loadLocations();
       return;
     }
 
+    // If server responded 405 or network error -> fallback to client-only admin
+    if (result.status === 405 || result.status === 0) {
+      // verify password locally
+      if (password === ADMIN_PASSWORD_CLIENT) {
+        setIsAuthenticated(true);
+        setIsClientOnlyAdmin(true);
+        localStorage.setItem(CLIENT_ONLY_FLAG, "true");
+        setPassword("");
+        setLocations(defaultData.locations.slice(0)); // clone
+        toast({
+          title: "⚠️ Client-only Admin",
+          description:
+            "Server POSTs are not accepted on this host. You are now admin in this browser only. Changes are local — use Export Locations JSON and update the repository via GitHub to persist for everyone.",
+        });
+        return;
+      } else {
+        toast({ title: "❌ Access Denied", description: "Incorrect password (client-only)" , variant: "destructive"});
+        return;
+      }
+    }
+
+    // server returned 401/400 etc.
+    toast({ title: "❌ Login failed", description: result.data?.error || "Invalid password", variant: "destructive" });
+  };
+
+  // Add location
+  const handleMapClick = async (e: React.MouseEvent<SVGSVGElement>) => {
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
     const svgX = ((e.clientX - rect.left) / rect.width) * 1000;
     const svgY = ((e.clientY - rect.top) / rect.height) * 589;
 
-    // Convert SVG coordinates back to lat/lng
     const minLng = -125;
     const maxLng = -66.9;
     const minLat = 24.5;
@@ -134,121 +193,113 @@ export default function ClosedDealsAdmin() {
     const lng = minLng + (svgX / 1000) * (maxLng - minLng);
     const lat = maxLat - (svgY / 589) * (maxLat - minLat);
 
-    try {
-      const response = await fetch("/api/deals/locations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // include session cookie
-        body: JSON.stringify({ lat, lng }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        toast({
-          title: "✅ Location Added",
-          description: `Deal location added at (${lat.toFixed(2)}, ${lng.toFixed(2)})`,
-        });
-        setLocations((prev) => [...prev, data.location]);
-      } else {
-        toast({
-          title: "❌ Error",
-          description: data?.error || "Failed to add deal location",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error adding location:", error);
-      toast({
-        title: "❌ Error",
-        description: "Failed to add deal location. Make sure the server is running.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this deal location?")) {
+    if (!isAuthenticated) {
+      toast({ title: "Unauthorized", description: "Please login to add deal locations", variant: "destructive" });
       return;
     }
 
-    setProcessingId(id);
+    if (isClientOnlyAdmin) {
+      // local-only add
+      const newLoc: DealLocation = {
+        id: uuidv4(),
+        lat,
+        lng,
+        name: `Manual ${new Date().toISOString()}`,
+        addedAt: new Date().toISOString(),
+      };
+      setLocations((p) => [...p, newLoc]);
+      toast({ title: "Added (local)", description: "Location added locally — export and commit to repo to persist." });
+      return;
+    }
+
+    // server-backed add
+    setProcessingId("adding");
     try {
-      const response = await fetch(`/api/deals/locations/${id}`, {
-        method: "DELETE",
+      const resp = await fetch("/api/deals/locations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ lat, lng }),
       });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        toast({
-          title: "🗑️ Deleted",
-          description: "Deal location has been removed",
-        });
-        setLocations((prev) => prev.filter((loc) => loc.id !== id));
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        setLocations((p) => [...p, data.location]);
+        toast({ title: "✅ Location Added", description: `Added at (${lat.toFixed(2)}, ${lng.toFixed(2)})` });
       } else {
-        toast({
-          title: "❌ Error",
-          description: data?.error || "Failed to delete location",
-          variant: "destructive",
-        });
+        toast({ title: "❌ Error", description: data?.error || "Failed to add", variant: "destructive" });
       }
-    } catch (error) {
-      console.error("Error deleting location:", error);
-      toast({
-        title: "❌ Error",
-        description: "Failed to delete location",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error("Error adding location:", err);
+      toast({ title: "❌ Error", description: "Failed to add location", variant: "destructive" });
     } finally {
       setProcessingId(null);
     }
   };
 
+  // Delete
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this deal location?")) return;
+
+    if (isClientOnlyAdmin) {
+      setLocations((p) => p.filter((l) => l.id !== id));
+      toast({ title: "Deleted (local)", description: "Removed locally — export and commit to repo to persist." });
+      return;
+    }
+
+    setProcessingId(id);
+    try {
+      const resp = await fetch(`/api/deals/locations/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        setLocations((p) => p.filter((l) => l.id !== id));
+        toast({ title: "🗑️ Deleted", description: "Deal location removed" });
+      } else {
+        toast({ title: "❌ Error", description: data?.error || "Failed to delete", variant: "destructive" });
+      }
+    } catch (err) {
+      console.error("Error deleting location:", err);
+      toast({ title: "❌ Error", description: "Failed to delete", variant: "destructive" });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Edit name
   const handleStartEdit = (location: DealLocation) => {
     setEditingId(location.id);
     setEditingName(location.name || "");
   };
 
   const handleSaveName = async (id: string) => {
-    if (editingName === locations.find((loc) => loc.id === id)?.name) {
+    if (isClientOnlyAdmin) {
+      setLocations((p) => p.map((l) => (l.id === id ? { ...l, name: editingName } : l)));
       setEditingId(null);
+      toast({ title: "Updated (local)", description: "Name updated locally — export and commit to repo to persist." });
       return;
     }
 
     setProcessingId(id);
     try {
-      const response = await fetch(`/api/deals/locations/${id}/name`, {
+      const resp = await fetch(`/api/deals/locations/${id}/name`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ name: editingName }),
       });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        toast({
-          title: "✅ Updated",
-          description: "Location name has been updated",
-        });
-        setLocations((prev) => prev.map((loc) => (loc.id === id ? { ...loc, name: editingName } : loc)));
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        setLocations((p) => p.map((l) => (l.id === id ? { ...l, name: editingName } : l)));
         setEditingId(null);
+        toast({ title: "✅ Updated", description: "Location name updated" });
       } else {
-        toast({
-          title: "❌ Error",
-          description: data?.error || "Failed to update name",
-          variant: "destructive",
-        });
+        toast({ title: "❌ Error", description: data?.error || "Failed to update", variant: "destructive" });
       }
-    } catch (error) {
-      console.error("Error updating name:", error);
-      toast({
-        title: "❌ Error",
-        description: "Failed to update name",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error("Error updating name:", err);
+      toast({ title: "❌ Error", description: "Failed to update", variant: "destructive" });
     } finally {
       setProcessingId(null);
     }
@@ -260,6 +311,14 @@ export default function ClosedDealsAdmin() {
   };
 
   const handleLogout = async () => {
+    if (isClientOnlyAdmin) {
+      localStorage.removeItem(CLIENT_ONLY_FLAG);
+      setIsClientOnlyAdmin(false);
+      setIsAuthenticated(false);
+      toast({ title: "Logged out (client-only)" });
+      return;
+    }
+
     try {
       const resp = await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
       const data = await resp.json();
@@ -271,213 +330,4 @@ export default function ClosedDealsAdmin() {
       }
     } catch (err) {
       console.error("Logout error:", err);
-      toast({ title: "Logout failed", variant: "destructive" });
-    }
-  };
-
-  // Convert lat/lng to SVG coordinates for the US map
-  // US bounds: lat 24.5-49.4, lng -125 to -66.9
-  const latLngToXY = (lat: number, lng: number) => {
-    const svgWidth = 1000;
-    const svgHeight = 589;
-
-    const minLng = -125;
-    const maxLng = -66.9;
-    const minLat = 24.5;
-    const maxLat = 49.4;
-
-    const x = ((lng - minLng) / (maxLng - minLng)) * svgWidth;
-    const y = ((maxLat - lat) / (maxLat - minLat)) * svgHeight;
-
-    return { x, y };
-  };
-
-  useEffect(() => {
-    // loadLocations is called after successful auth or on login,
-    // but we can load public locations even if not authenticated:
-    loadLocations();
-  }, []);
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-
-        <main className="flex-1 flex items-center justify-center py-16 bg-muted/30">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Lock className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>Admin Access Required</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter admin password"
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  <Lock className="w-4 h-4 mr-2" />
-                  Login
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </main>
-
-        <Footer />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-
-      <main className="flex-1 py-16 md:py-24 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Manage Closed Deals</h1>
-              <p className="text-muted-foreground">Click on the map to add deal locations</p>
-            </div>
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Map */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5" />
-                    Interactive Map
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-start gap-2">
-                    <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-blue-900">Click anywhere on the map to add a green pin for a closed deal location.</p>
-                  </div>
-
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    </div>
-                  ) : (
-                    <div className="relative w-full" style={{ paddingBottom: "60%" }}>
-                      <svg viewBox="0 0 1000 589" className="absolute inset-0 w-full h-full cursor-crosshair" onClick={handleMapClick} style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }}>
-                        {/* Background */}
-                        <rect x="0" y="0" width="1000" height="589" fill="#f3f4f6" />
-                        {/* Use the US map as background image */}
-                        <image href="/us.jpg" x="0" y="0" width="1000" height="589" opacity="1" style={{ pointerEvents: "none" }} />
-
-                        {/* Pins for each location */}
-                        {locations.map((location) => {
-                          const { x, y } = latLngToXY(location.lat, location.lng);
-                          const isHovered = hoveredId === location.id;
-                          return (
-                            <g key={location.id} onMouseEnter={() => setHoveredId(location.id)} onMouseLeave={() => setHoveredId(null)} style={{ cursor: "pointer" }}>
-                              {/* Pulsing circle */}
-                              <circle cx={x} cy={y} r="12" fill={isHovered ? "#22c55e" : "#16a34a"} opacity="0.3">
-                                <animate attributeName="r" from="12" to="24" dur="2s" repeatCount="indefinite" />
-                                <animate attributeName="opacity" from="0.3" to="0" dur="2s" repeatCount="indefinite" />
-                              </circle>
-                              {/* Main pin */}
-                              <circle cx={x} cy={y} r="8" fill="#16a34a" stroke="white" strokeWidth="2" />
-                              {/* Actions */}
-                              {isHovered && (
-                                <g>
-                                  <rect x={x + 12} y={y - 16} rx={6} ry={6} width={140} height={32} fill="#111827" opacity="0.9" />
-                                  <text x={x + 18} y={y + 7} fill="#fff" fontSize="12">
-                                    {location.name || `${location.lat.toFixed(2)}, ${location.lng.toFixed(2)}`}
-                                  </text>
-                                  <g transform={`translate(${x + 12}, ${y + 36})`}>
-                                    <button
-                                      onClick={() => {
-                                        if (!confirm("Delete this location?")) return;
-                                        handleDelete(location.id);
-                                      }}
-                                      className="ml-2"
-                                    >
-                                      <Trash2 className="w-4 h-4 text-red-500" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleStartEdit(location)}
-                                      className="ml-3"
-                                    >
-                                      Edit
-                                    </button>
-                                  </g>
-                                </g>
-                              )}
-                            </g>
-                          );
-                        })}
-                      </svg>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right column: location list / edit */}
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Locations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {locations.map((loc) => (
-                      <div key={loc.id} className="flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold">{loc.name || `${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)}`}</div>
-                          <div className="text-xs text-muted-foreground">{loc.city || loc.state || loc.addedAt}</div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleStartEdit(loc)}>
-                            Edit
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleDelete(loc.id)}>
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-
-                    {editingId && (
-                      <div className="mt-4">
-                        <Label>Name</Label>
-                        <Input value={editingName} onChange={(e) => setEditingName(e.target.value)} />
-                        <div className="mt-2 flex gap-2">
-                          <Button onClick={() => editingId && handleSaveName(editingId)}>Save</Button>
-                          <Button variant="outline" onClick={handleCancelEdit}>
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <Footer />
-    </div>
-  );
-}
+      toast({ title: "Logout failed", va
