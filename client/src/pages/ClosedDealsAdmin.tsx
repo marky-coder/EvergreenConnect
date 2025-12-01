@@ -1,14 +1,11 @@
-// client/src/pages/ClosedDealsAdmin.tsx
-import { useState, useEffect } from "react";
+// client/src/pages/ClosedDeals.tsx
+import { useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { MapPin, Loader2, Lock, Trash2, Info } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
+import { MapPin, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import defaultData from "@/data/deals-locations.json";
 
 interface DealLocation {
@@ -21,313 +18,265 @@ interface DealLocation {
   addedAt: string;
 }
 
-const ADMIN_PASSWORD_CLIENT = "VitaTalent2025!";
+type Nudges = Record<string, { dx: number; dy: number }>;
+const LOCAL_STORAGE_KEY = "closedDealsNudges_v1";
 const CLIENT_ONLY_FLAG = "closedDeals_clientOnlyAdmin_v1";
 
-/**
- * ClosedDealsAdmin
- *
- * This admin page supports two modes:
- *  - server-backed admin: tries to POST to /api/admin/login and then uses credentials:include to
- *    add/delete/edit locations on the server (normal mode).
- *  - client-only admin: if the POST to /api/admin/login fails with a 405 or network error,
- *    we fall back to a local-only admin mode that keeps changes in memory and allows you to
- *    export a JSON file you can paste into the repo at:
- *      https://github.com/marky-coder/EvergreenConnect/edit/main/client/src/data/deals-locations.json
- *
- * The client-only mode is useful when the site is hosted statically (GitHub Pages / CDN) and
- * the origin refuses POSTs. It keeps everything on GitHub (no new host required).
- */
-export default function ClosedDealsAdmin() {
-  const { toast } = useToast();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isClientOnlyAdmin, setIsClientOnlyAdmin] = useState(false);
-  const [password, setPassword] = useState("");
+export default function ClosedDeals() {
   const [locations, setLocations] = useState<DealLocation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [usedFallback, setUsedFallback] = useState(false);
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [nudges, setNudges] = useState<Nudges>({});
+  const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
+  const svgContainerRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Load locations from server if available, otherwise from bundled data
+  // Load nudges
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (raw) {
+        const parsed: Nudges = JSON.parse(raw);
+        setNudges(parsed);
+      }
+    } catch {}
+  }, []);
+
+  // On mount load locations and admin status (server or client-only)
+  useEffect(() => {
+    loadLocations();
+    checkAdminStatus();
+    updateSvgSize();
+    window.addEventListener("resize", updateSvgSize);
+    return () => window.removeEventListener("resize", updateSvgSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const updateSvgSize = () => {
+    const container = document.querySelector(".container") as HTMLElement | null;
+    const width = container ? Math.min(1200, container.clientWidth) : 1000;
+    const height = Math.round((width * 589) / 1000);
+    setSvgSize({ width, height });
+  };
+
+  const normalizeLocation = (raw: any): DealLocation => {
+    const id = raw.id ?? raw.name ?? `${raw.lat ?? raw.latitude}-${raw.lng ?? raw.lon ?? raw.longitude}`;
+    const latVal = raw.lat ?? raw.latitude ?? raw.lat_deg ?? raw.latDeg;
+    const lngVal = raw.lng ?? raw.lon ?? raw.longitude ?? raw.lng_deg ?? raw.lngDeg;
+    const lat = typeof latVal === "string" ? parseFloat(latVal) : latVal;
+    const lng = typeof lngVal === "string" ? parseFloat(lngVal) : lngVal;
+    const addedAt = raw.addedAt ?? raw.added_at ?? new Date().toISOString();
+    return {
+      id: String(id),
+      lat: Number.isFinite(lat) ? lat : 0,
+      lng: Number.isFinite(lng) ? lng : 0,
+      name: raw.name,
+      city: raw.city,
+      state: raw.state,
+      addedAt,
+    };
+  };
+
   const loadLocations = async () => {
     setIsLoading(true);
+    setFallbackReason(null);
     try {
-      const resp = await fetch("/api/deals/locations");
-      if (resp.ok) {
-        const data = await resp.json();
-        if (Array.isArray(data?.locations)) setLocations(data.locations);
-        else if (Array.isArray(data)) setLocations(data);
-        else setLocations(defaultData.locations);
-      } else {
-        // if server returns 404/500, fallback to bundled
-        setLocations(defaultData.locations);
+      const response = await fetch("/api/deals/locations");
+      if (!response.ok) {
+        const statusText = `${response.status} ${response.statusText}`;
+        setFallbackReason(`Server responded ${statusText}`);
+        setLocations(defaultData.locations.map(normalizeLocation));
+        setUsedFallback(true);
+        setIsLoading(false);
+        return;
       }
-    } catch (err) {
-      // network error, fallback
-      setLocations(defaultData.locations);
+      const data = await response.json();
+      let rawLocations: any[] | undefined;
+      if (Array.isArray(data)) rawLocations = data;
+      else if (Array.isArray(data?.locations)) rawLocations = data.locations;
+      else if (Array.isArray(data?.data?.locations)) rawLocations = data.data.locations;
+      if (rawLocations && rawLocations.length > 0) {
+        const normalized = rawLocations.map(normalizeLocation);
+        setLocations(normalized);
+        setUsedFallback(false);
+      } else {
+        setFallbackReason("API returned no locations");
+        setLocations(defaultData.locations.map(normalizeLocation));
+        setUsedFallback(true);
+      }
+    } catch (err: any) {
+      setFallbackReason(String(err?.message ?? err));
+      setLocations(defaultData.locations.map(normalizeLocation));
+      setUsedFallback(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    // if client-only flag present, treat user as client-only admin
-    const flag = localStorage.getItem(CLIENT_ONLY_FLAG);
-    if (flag === "true") {
-      setIsClientOnlyAdmin(true);
-      setIsAuthenticated(true);
-      // load locations from bundled (or optionally from repo)
-      setLocations(defaultData.locations);
-    } else {
-      loadLocations();
-      // also check server auth status
-      checkAuthStatus();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const checkAuthStatus = async () => {
-    try {
-      const resp = await fetch("/api/admin/status", { credentials: "include" });
-      if (!resp.ok) {
-        setIsAuthenticated(false);
-        return;
-      }
-      const json = await resp.json();
-      if (json?.isAdmin) {
-        setIsAuthenticated(true);
-        setIsClientOnlyAdmin(false);
-        loadLocations();
-      } else {
-        setIsAuthenticated(false);
-      }
-    } catch (err) {
-      setIsAuthenticated(false);
-    }
-  };
-
-  const tryServerLogin = async (pw: string) => {
-    try {
-      const resp = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ password: pw }),
-      });
-
-      // If origin returns 405, it is a static host / CDN — fallback
-      if (resp.status === 405) {
-        return { ok: false, status: 405 };
-      }
-
-      // If network failed, this will throw earlier
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
-        return { ok: false, status: resp.status, data };
-      }
-
-      const data = await resp.json();
-      if (data?.success) return { ok: true, status: resp.status, data };
-      return { ok: false, status: resp.status, data };
-    } catch (err: any) {
-      // network error (e.g. blocked by CDN), return as failure
-      return { ok: false, status: 0, error: String(err?.message ?? err) };
-    }
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // try server login first
-    const result = await tryServerLogin(password);
-
-    if (result.ok) {
-      setIsAuthenticated(true);
-      setIsClientOnlyAdmin(false);
-      setPassword("");
-      toast({ title: "✅ Access Granted", description: "You are logged in as admin (server mode)." });
-      // refresh locations from server
-      await loadLocations();
+  // Check admin status: server-side or client-only flag
+  const checkAdminStatus = async () => {
+    // client-only admin overrides
+    const clientFlag = localStorage.getItem(CLIENT_ONLY_FLAG) === "true";
+    if (clientFlag) {
+      setIsAdmin(true);
       return;
     }
 
-    // If server responded 405 or network error -> fallback to client-only admin
-    if (result.status === 405 || result.status === 0) {
-      // verify password locally
-      if (password === ADMIN_PASSWORD_CLIENT) {
-        setIsAuthenticated(true);
-        setIsClientOnlyAdmin(true);
-        localStorage.setItem(CLIENT_ONLY_FLAG, "true");
-        setPassword("");
-        setLocations(defaultData.locations.slice(0)); // clone
-        toast({
-          title: "⚠️ Client-only Admin",
-          description:
-            "Server POSTs are not accepted on this host. You are now admin in this browser only. Changes are local — use Export Locations JSON and update the repository via GitHub to persist for everyone.",
-        });
-        return;
-      } else {
-        toast({ title: "❌ Access Denied", description: "Incorrect password (client-only)" , variant: "destructive"});
+    try {
+      const resp = await fetch("/api/admin/status", { credentials: "include" });
+      if (!resp.ok) {
+        setIsAdmin(false);
         return;
       }
+      const json = await resp.json();
+      setIsAdmin(Boolean(json?.isAdmin));
+    } catch {
+      setIsAdmin(false);
     }
-
-    // server returned 401/400 etc.
-    toast({ title: "❌ Login failed", description: result.data?.error || "Invalid password", variant: "destructive" });
   };
 
-  // Add location
-  const handleMapClick = async (e: React.MouseEvent<SVGSVGElement>) => {
-    const svg = e.currentTarget;
-    const rect = svg.getBoundingClientRect();
-    const svgX = ((e.clientX - rect.left) / rect.width) * 1000;
-    const svgY = ((e.clientY - rect.top) / rect.height) * 589;
-
+  // Equirectangular mapping
+  const latLngToXY = (lat: number, lng: number) => {
+    const { width: svgWidth, height: svgHeight } = svgSize;
     const minLng = -125;
     const maxLng = -66.9;
     const minLat = 24.5;
     const maxLat = 49.4;
-
-    const lng = minLng + (svgX / 1000) * (maxLng - minLng);
-    const lat = maxLat - (svgY / 589) * (maxLat - minLat);
-
-    if (!isAuthenticated) {
-      toast({ title: "Unauthorized", description: "Please login to add deal locations", variant: "destructive" });
-      return;
-    }
-
-    if (isClientOnlyAdmin) {
-      // local-only add
-      const newLoc: DealLocation = {
-        id: uuidv4(),
-        lat,
-        lng,
-        name: `Manual ${new Date().toISOString()}`,
-        addedAt: new Date().toISOString(),
-      };
-      setLocations((p) => [...p, newLoc]);
-      toast({ title: "Added (local)", description: "Location added locally — export and commit to repo to persist." });
-      return;
-    }
-
-    // server-backed add
-    setProcessingId("adding");
-    try {
-      const resp = await fetch("/api/deals/locations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ lat, lng }),
-      });
-      const data = await resp.json();
-      if (resp.ok && data.success) {
-        setLocations((p) => [...p, data.location]);
-        toast({ title: "✅ Location Added", description: `Added at (${lat.toFixed(2)}, ${lng.toFixed(2)})` });
-      } else {
-        toast({ title: "❌ Error", description: data?.error || "Failed to add", variant: "destructive" });
-      }
-    } catch (err) {
-      console.error("Error adding location:", err);
-      toast({ title: "❌ Error", description: "Failed to add location", variant: "destructive" });
-    } finally {
-      setProcessingId(null);
-    }
+    const x = ((lng - minLng) / (maxLng - minLng)) * svgWidth;
+    const y = ((maxLat - lat) / (maxLat - minLat)) * svgHeight;
+    return { x: Math.max(0, Math.min(svgWidth, x)), y: Math.max(0, Math.min(svgHeight, y)) };
   };
 
-  // Delete
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this deal location?")) return;
+  /******** Drag/edit logic *********/
+  const dragState = useRef<{ draggingId: string | null; originMouseX: number; originMouseY: number }>({ draggingId: null, originMouseX: 0, originMouseY: 0 });
 
-    if (isClientOnlyAdmin) {
-      setLocations((p) => p.filter((l) => l.id !== id));
-      toast({ title: "Deleted (local)", description: "Removed locally — export and commit to repo to persist." });
+  const onPointerDown = (e: React.PointerEvent, id: string) => {
+    if (!isEditMode || !isAdmin) return;
+    const target = e.currentTarget as HTMLElement;
+    try { (target as any).setPointerCapture(e.pointerId); } catch {}
+    dragState.current = { draggingId: id, originMouseX: e.clientX, originMouseY: e.clientY };
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!isEditMode || !isAdmin) return;
+    if (!dragState.current.draggingId) return;
+    const ds = dragState.current;
+    const dx = e.clientX - ds.originMouseX;
+    const dy = e.clientY - ds.originMouseY;
+    setNudges((prev) => {
+      const next = { ...prev };
+      const curr = next[ds.draggingId!] || { dx: 0, dy: 0 };
+      next[ds.draggingId!] = { dx: curr.dx + dx, dy: curr.dy + dy };
+      try { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next)); } catch {}
+      dragState.current.originMouseX = e.clientX;
+      dragState.current.originMouseY = e.clientY;
+      return next;
+    });
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!isEditMode || !isAdmin) return;
+    dragState.current.draggingId = null;
+  };
+
+  const toggleEditMode = () => {
+    if (!isAdmin) {
+      if (confirm("Edit Pins is admin-only. Go to admin login?")) navigate("/closed-deals/admin");
       return;
     }
-
-    setProcessingId(id);
-    try {
-      const resp = await fetch(`/api/deals/locations/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = await resp.json();
-      if (resp.ok && data.success) {
-        setLocations((p) => p.filter((l) => l.id !== id));
-        toast({ title: "🗑️ Deleted", description: "Deal location removed" });
-      } else {
-        toast({ title: "❌ Error", description: data?.error || "Failed to delete", variant: "destructive" });
-      }
-    } catch (err) {
-      console.error("Error deleting location:", err);
-      toast({ title: "❌ Error", description: "Failed to delete", variant: "destructive" });
-    } finally {
-      setProcessingId(null);
-    }
+    setIsEditMode((v) => !v);
   };
 
-  // Edit name
-  const handleStartEdit = (location: DealLocation) => {
-    setEditingId(location.id);
-    setEditingName(location.name || "");
-  };
-
-  const handleSaveName = async (id: string) => {
-    if (isClientOnlyAdmin) {
-      setLocations((p) => p.map((l) => (l.id === id ? { ...l, name: editingName } : l)));
-      setEditingId(null);
-      toast({ title: "Updated (local)", description: "Name updated locally — export and commit to repo to persist." });
+  const exportNudges = async () => {
+    if (!isAdmin) {
+      alert("Only admins can export nudges. Please login on the admin page.");
       return;
     }
-
-    setProcessingId(id);
-    try {
-      const resp = await fetch(`/api/deals/locations/${id}/name`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name: editingName }),
-      });
-      const data = await resp.json();
-      if (resp.ok && data.success) {
-        setLocations((p) => p.map((l) => (l.id === id ? { ...l, name: editingName } : l)));
-        setEditingId(null);
-        toast({ title: "✅ Updated", description: "Location name updated" });
-      } else {
-        toast({ title: "❌ Error", description: data?.error || "Failed to update", variant: "destructive" });
-      }
-    } catch (err) {
-      console.error("Error updating name:", err);
-      toast({ title: "❌ Error", description: "Failed to update", variant: "destructive" });
-    } finally {
-      setProcessingId(null);
-    }
+    const text = JSON.stringify(nudges, null, 2);
+    try { await navigator.clipboard.writeText(text); alert("Nudges copied to clipboard."); } catch { console.log(text); alert("Exported to console."); }
   };
 
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditingName("");
+  const clearNudges = () => {
+    if (!isAdmin) { alert("Only admins can clear nudges. Please login on the admin page."); return; }
+    if (!confirm("Clear all saved nudges?")) return;
+    setNudges({});
+    try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch {}
+    alert("Nudges cleared locally. Reload page to be sure.");
   };
 
-  const handleLogout = async () => {
-    if (isClientOnlyAdmin) {
-      localStorage.removeItem(CLIENT_ONLY_FLAG);
-      setIsClientOnlyAdmin(false);
-      setIsAuthenticated(false);
-      toast({ title: "Logged out (client-only)" });
-      return;
-    }
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1 py-16 md:py-24 lg:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-6">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-2">Closed Deals Across America</h1>
+            <p className="text-lg text-muted-foreground">See where we've successfully helped landowners across the United States</p>
+          </div>
 
-    try {
-      const resp = await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
-      const data = await resp.json();
-      if (resp.ok && data.success) {
-        setIsAuthenticated(false);
-        toast({ title: "Logged out" });
-      } else {
-        toast({ title: "Logout failed", variant: "destructive" });
-      }
-    } catch (err) {
-      console.error("Logout error:", err);
-      toast({ title: "Logout failed", va
+          <div className="flex items-center justify-between mb-4 gap-4">
+            <div>
+              <Button size="sm" onClick={toggleEditMode}>{isEditMode ? "Exit Edit Pins" : "Edit Pins"}</Button>
+              <Button size="sm" variant="outline" className="ml-3" onClick={exportNudges}>Export Nudges</Button>
+              <Button size="sm" variant="destructive" className="ml-3" onClick={clearNudges}>Clear Nudges</Button>
+            </div>
+
+            <div className="text-sm text-muted-foreground">{isEditMode && isAdmin ? "Drag pins to adjust positions." : "Toggle Edit Pins to adjust locations (admin-only)."}</div>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : (
+            <Card className="max-w-6xl mx-auto">
+              <CardContent className="p-6">
+                <div className="relative w-full" style={{ paddingBottom: "60%" }}>
+                  <svg viewBox={`0 0 ${svgSize.width} ${svgSize.height}`} className="absolute inset-0 w-full h-full" style={{ background: "#f3f4f6", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}>
+                    <image href="/us.jpg" x="0" y="0" width={svgSize.width} height={svgSize.height} preserveAspectRatio="xMinYMin meet" />
+                    {locations.map((loc) => {
+                      const base = latLngToXY(loc.lat, loc.lng);
+                      const n = nudges[loc.id] || { dx: 0, dy: 0 };
+                      const x = base.x + n.dx;
+                      const y = base.y + n.dy;
+                      return (
+                        <g key={loc.id}>
+                          <circle cx={x} cy={y} r="12" fill="#16a34a" opacity="0.28" />
+                          <circle cx={x} cy={y} r="8" fill="#16a34a" stroke="white" strokeWidth="2" style={{ cursor: isEditMode && isAdmin ? "grab" : "default", touchAction: "none" }} onPointerDown={(e) => onPointerDown(e, loc.id)} />
+                          <title>{loc.name || (loc.city && loc.state ? `${loc.city}, ${loc.state}` : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}</title>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+
+                <div className="mt-6 text-center">
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <MapPin className="w-5 h-5 text-green-600" />
+                    <span className="text-lg font-semibold">{locations.length} {locations.length === 1 ? "Deal" : "Deals"} Closed</span>
+                  </div>
+
+                  {usedFallback && (
+                    <div className="mt-4 text-sm text-yellow-700">
+                      <div>Note: showing bundled locations because the server API was unavailable (fallback).</div>
+                      {fallbackReason && <div className="mt-1 text-xs text-yellow-800">Reason: {fallbackReason}</div>}
+                      <div className="mt-2 text-xs text-muted-foreground">Check the server route <code>/api/deals/locations</code> (should return JSON). See console for details.</div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="text-center mt-12 max-w-2xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Ready to Join Them?</h2>
+            <p className="text-lg text-muted-foreground mb-6">Let us help you close a deal on your land property today</p>
+            <Button size="lg" onClick={() => navigate("/get-offer")}>Get Your Cash Offer</Button>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
