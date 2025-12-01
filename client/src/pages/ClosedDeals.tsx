@@ -88,7 +88,7 @@ export default function ClosedDeals() {
     // Create a projection sized to the current container
     const projection = geoAlbersUsa()
       // scale and translate are tuned below via fitting
-      .translate([width / 2, height / 2])
+      .translate([width / 3, height / 2])
       .scale(1000);
 
     const pathGenerator = geoPath().projection(projection);
