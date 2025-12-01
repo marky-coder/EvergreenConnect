@@ -1,3 +1,4 @@
+// server/index.ts
 // Load environment variables FIRST
 import dotenv from "dotenv";
 dotenv.config({ debug: false });
@@ -6,14 +7,25 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import session from "express-session";
+import MemoryStoreFactory from "memorystore";
+
+const MemoryStore = MemoryStoreFactory(session);
 
 const app = express();
+
+declare module "express-session" {
+  interface SessionData {
+    isAdmin?: boolean;
+  }
+}
 
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
   }
 }
+
 app.use(
   express.json({
     verify: (req, _res, buf) => {
@@ -22,6 +34,25 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: false }));
+
+// Session middleware (server-side admin auth)
+// IMPORTANT: set process.env.SESSION_SECRET in production
+const SESSION_SECRET = process.env.SESSION_SECRET || "dev-session-secret";
+app.use(
+  session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    },
+    store: new MemoryStore({
+      checkPeriod: 24 * 60 * 60 * 1000, // prune expired entries every 24h
+    }),
+  })
+);
 
 // Serve uploaded files statically
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -32,8 +63,10 @@ app.use((req, res, next) => {
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
+  // @ts-ignore
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
+    // @ts-ignore
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
