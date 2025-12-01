@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import defaultData from "@/data/deals-locations.json";
-import { geoAlbersUsa, geoPath, GeoPermissibleObjects } from "d3-geo";
 
 interface DealLocation {
   id: string;
@@ -19,19 +18,46 @@ interface DealLocation {
   addedAt: string;
 }
 
+type Nudges = Record<string, { dx: number; dy: number }>;
+
+const LOCAL_STORAGE_KEY = "closedDealsNudges_v1";
+
 export default function ClosedDeals() {
   const [locations, setLocations] = useState<DealLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [usedFallback, setUsedFallback] = useState(false);
-  const [statesGeo, setStatesGeo] = useState<any | null>(null);
-  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [nudges, setNudges] = useState<Nudges>({});
+  const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
+  const svgContainerRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+
+  // Load nudges from localStorage (if present)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (raw) {
+        const parsed: Nudges = JSON.parse(raw);
+        setNudges(parsed);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     loadLocations();
-    // load geojson for US states from a public source
-    loadUsStatesGeo();
+    updateSvgSize();
+    window.addEventListener("resize", updateSvgSize);
+    return () => window.removeEventListener("resize", updateSvgSize);
   }, []);
+
+  const updateSvgSize = () => {
+    const container = document.querySelector(".container") as HTMLElement | null;
+    const width = container ? Math.min(1200, container.clientWidth) : 1000;
+    const height = Math.round((width * 589) / 1000);
+    setSvgSize({ width, height });
+  };
 
   const loadLocations = async () => {
     try {
@@ -42,12 +68,10 @@ export default function ClosedDeals() {
           setLocations(data.locations);
           setUsedFallback(false);
         } else {
-          console.warn("API returned no locations. Falling back to local data.");
           setLocations(defaultData.locations);
           setUsedFallback(true);
         }
       } else {
-        console.warn("API responded with status", response.status, " — using local data.");
         setLocations(defaultData.locations);
         setUsedFallback(true);
       }
@@ -60,125 +84,100 @@ export default function ClosedDeals() {
     }
   };
 
-  const loadUsStatesGeo = async () => {
-    try {
-      // Public GeoJSON of US states. This is a common public dataset.
-      // If you prefer to host in your repo, replace this URL with an internal file import.
-      const GEO_URL =
-        "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json";
+  // Mercator-style lat -> y transform + linear lng -> x
+  const latLngToXY = (lat: number, lng: number) => {
+    const { width: svgWidth, height: svgHeight } = svgSize;
+    // Geographic bounds for continental US (approx)
+    const minLng = -125;
+    const maxLng = -66.9;
+    const minLat = 24.5;
+    const maxLat = 49.4;
 
-      const resp = await fetch(GEO_URL);
-      const geo = await resp.json();
-      setStatesGeo(geo);
-    } catch (err) {
-      console.error("Failed to load US states GeoJSON:", err);
-      setStatesGeo(null);
-    }
-  };
+    // X linear
+    const x = ((lng - minLng) / (maxLng - minLng)) * svgWidth;
 
-  /**
-   * Render helpers: we use d3-geo's geoAlbersUsa projection to convert
-   * [lng, lat] -> [x, y], then draw an SVG path for the states.
-   *
-   * This projection is made for the U.S. and aligns well with typical US maps.
-   */
-  const renderMapAndPins = (width: number, height: number) => {
-    if (!statesGeo) return null;
-
-    // Create a projection sized to the current container
-    const projection = geoAlbersUsa()
-      // scale and translate are tuned below via fitting
-      .translate([width / 2, height / 2])
-      .scale(1000);
-
-    const pathGenerator = geoPath().projection(projection);
-
-    // Fit projection nicely to our svg viewport by computing the bounds
-    try {
-      // compute bounds of all features
-      const b = pathGenerator.bounds(statesGeo);
-      const dx = b[1][0] - b[0][0];
-      const dy = b[1][1] - b[0][1];
-      const scale = Math.min(
-        (width * 0.9) / dx,
-        (height * 0.9) / dy
+    // Mercator Y
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const merc = (latDeg: number) =>
+      Math.log(
+        Math.tan(Math.PI / 4 + toRad(Math.max(Math.min(latDeg, maxLat - 0.0001), minLat + 0.0001)) / 2)
       );
-      const translateX = width / 2 - scale * (b[0][0] + dx / 2);
-      const translateY = height / 2 - scale * (b[0][1] + dy / 2);
 
-      projection.scale((projection as any).scale() * scale * 0.8);
-      projection.translate([width / 2, height / 2]);
-      // Note: we mainly rely on geoAlbersUsa default translate/scale after scale tuning
-    } catch (e) {
-      // if bounds fails, ignore and continue with defaults
-      console.warn("Projection fitting failed, using defaults.", e);
-    }
+    const mercMax = merc(maxLat);
+    const mercMin = merc(minLat);
+    const mercLat = merc(lat);
 
-    // Optional nudges (pixel adjustments) keyed by location.id if any pin still needs small correction
-    const nudges: Record<string, { dx?: number; dy?: number }> = {
-      // e.g. "beaufort-nc": { dx: 6, dy: -4 },
-    };
+    const normalizedY = (mercMax - mercLat) / (mercMax - mercMin);
+    const y = normalizedY * svgHeight;
 
-    return (
-      <>
-        {/* draw each state */}
-        {statesGeo.features.map((f: any, idx: number) => {
-          const d = pathGenerator(f as any) as string;
-          return (
-            <path
-              key={`s-${idx}`}
-              d={d}
-              fill="#4b4b4b"
-              stroke="#ffffff"
-              strokeWidth={1}
-              opacity={1}
-            />
-          );
-        })}
-
-        {/* draw pins */}
-        {locations.map((location) => {
-          const coords: any = (projection as any)([location.lng, location.lat]);
-          if (!coords) return null;
-          const n = nudges[location.id] || { dx: 0, dy: 0 };
-          const x = coords[0] + (n.dx || 0);
-          const y = coords[1] + (n.dy || 0);
-
-          return (
-            <g key={location.id}>
-              <circle cx={x} cy={y} r="12" fill="#16a34a" opacity="0.28">
-                <animate attributeName="r" from="12" to="24" dur="2s" repeatCount="indefinite" />
-                <animate attributeName="opacity" from="0.28" to="0" dur="2s" repeatCount="indefinite" />
-              </circle>
-
-              <circle cx={x} cy={y} r="8" fill="#16a34a" stroke="white" strokeWidth="2" />
-              <title>
-                {location.name ||
-                  (location.city && location.state
-                    ? `${location.city}, ${location.state}`
-                    : `Deal Location (${location.lat.toFixed(2)}, ${location.lng.toFixed(2)})`)}
-              </title>
-            </g>
-          );
-        })}
-      </>
-    );
+    return { x: Math.max(0, Math.min(svgWidth, x)), y: Math.max(0, Math.min(svgHeight, y)) };
   };
 
-  // Responsive SVG width/height
-  const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
-  useEffect(() => {
-    const update = () => {
-      // container width minus paddings
-      const container = document.querySelector(".container") as HTMLElement | null;
-      const width = container ? Math.min(1200, container.clientWidth) : 1000;
-      const height = Math.round((width * 589) / 1000);
-      setSvgSize({ width, height });
+  /*********** Drag/edit logic ***********/
+  const dragState = useRef<{
+    draggingId: string | null;
+    originMouseX: number;
+    originMouseY: number;
+  }>({ draggingId: null, originMouseX: 0, originMouseY: 0 });
+
+  const onPointerDown = (e: React.PointerEvent, id: string) => {
+    if (!isEditMode) return;
+    const target = e.currentTarget as HTMLElement;
+    (target as any).setPointerCapture(e.pointerId);
+    dragState.current = {
+      draggingId: id,
+      originMouseX: e.clientX,
+      originMouseY: e.clientY,
     };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!isEditMode) return;
+    if (!dragState.current.draggingId) return;
+    const ds = dragState.current;
+    const dx = e.clientX - ds.originMouseX;
+    const dy = e.clientY - ds.originMouseY;
+
+    setNudges((prev) => {
+      const prevN = { ...prev };
+      const curr = prevN[ds.draggingId!] || { dx: 0, dy: 0 };
+      prevN[ds.draggingId!] = { dx: curr.dx + dx, dy: curr.dy + dy };
+      // reset origin so next movement is incremental
+      dragState.current.originMouseX = e.clientX;
+      dragState.current.originMouseY = e.clientY;
+      // persist to localStorage for convenience
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(prevN));
+      } catch (err) {}
+      return prevN;
+    });
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!isEditMode) return;
+    if (!dragState.current.draggingId) return;
+    const target = e.currentTarget as HTMLElement;
+    try {
+      (target as any).releasePointerCapture(e.pointerId);
+    } catch {}
+    dragState.current.draggingId = null;
+  };
+
+  const toggleEditMode = () => {
+    setIsEditMode((v) => !v);
+  };
+
+  const exportNudges = async () => {
+    const text = JSON.stringify(nudges, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log("Nudges copied to clipboard:", text);
+      alert("Nudges copied to clipboard. Paste them into your code or a file.");
+    } catch (e) {
+      console.log("Nudges:", text);
+      alert("Could not copy to clipboard — check console for JSON.");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -186,13 +185,28 @@ export default function ClosedDeals() {
 
       <main className="flex-1 py-16 md:py-24 lg:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+          <div className="text-center max-w-3xl mx-auto mb-6">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-2">
               Closed Deals Across America
             </h1>
             <p className="text-lg text-muted-foreground">
               See where we've successfully helped landowners across the United States
             </p>
+          </div>
+
+          <div className="flex items-center justify-between mb-4 gap-4">
+            <div>
+              <Button size="sm" onClick={toggleEditMode}>
+                {isEditMode ? "Exit Edit Pins" : "Edit Pins"}
+              </Button>
+              <Button size="sm" variant="outline" className="ml-3" onClick={exportNudges}>
+                Export Nudges
+              </Button>
+            </div>
+
+            <div className="text-sm text-muted-foreground">
+              {isEditMode ? "Drag pins to adjust positions. Click Export Nudges to copy adjustments." : "Toggle Edit Pins to adjust locations."}
+            </div>
           </div>
 
           {isLoading ? (
@@ -201,21 +215,58 @@ export default function ClosedDeals() {
             </div>
           ) : (
             <Card className="max-w-6xl mx-auto">
-              <CardContent className="p-8">
-                <div className="relative w-full" style={{ paddingBottom: "60%" }}>
+              <CardContent className="p-6">
+                <div ref={svgContainerRef} className="relative w-full" style={{ paddingBottom: "60%" }}>
                   <svg
-                    ref={svgRef}
                     viewBox={`0 0 ${svgSize.width} ${svgSize.height}`}
-                    preserveAspectRatio="xMidYMid meet"
                     className="absolute inset-0 w-full h-full"
                     style={{ background: "#f3f4f6", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerLeave={onPointerUp}
                   >
-                    {/* If statesGeo is not ready, we still draw nothing and show count */}
-                    {statesGeo && renderMapAndPins(svgSize.width, svgSize.height)}
+                    {/* background image */}
+                    <image href="/us.jpg" x="0" y="0" width={svgSize.width} height={svgSize.height} />
+
+                    {/* pins */}
+                    {locations.map((loc) => {
+                      const base = latLngToXY(loc.lat, loc.lng);
+                      const n = nudges[loc.id] || { dx: 0, dy: 0 };
+                      const x = base.x + n.dx;
+                      const y = base.y + n.dy;
+
+                      return (
+                        <g key={loc.id}>
+                          <circle cx={x} cy={y} r="12" fill="#16a34a" opacity="0.28">
+                            <animate attributeName="r" from="12" to="24" dur="2s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" from="0.28" to="0" dur="2s" repeatCount="indefinite" />
+                          </circle>
+
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r="8"
+                            fill="#16a34a"
+                            stroke="white"
+                            strokeWidth="2"
+                            style={{ cursor: isEditMode ? "grab" : "default", touchAction: "none" }}
+                            onPointerDown={(e) => onPointerDown(e, loc.id)}
+                          />
+
+                          <title>
+                            {loc.name ||
+                              (loc.city && loc.state
+                                ? `${loc.city}, ${loc.state}`
+                                : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}
+                          </title>
+
+                        </g>
+                      );
+                    })}
                   </svg>
                 </div>
 
-                <div className="mt-8 text-center">
+                <div className="mt-6 text-center">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <MapPin className="w-5 h-5 text-green-600" />
                     <span className="text-lg font-semibold">
@@ -233,8 +284,7 @@ export default function ClosedDeals() {
             </Card>
           )}
 
-          {/* CTA Section */}
-          <div className="text-center mt-16 max-w-2xl mx-auto">
+          <div className="text-center mt-12 max-w-2xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
               Ready to Join Them?
             </h2>
@@ -242,11 +292,7 @@ export default function ClosedDeals() {
               Let us help you close a deal on your land property today
             </p>
 
-            <Button
-              size="lg"
-              onClick={() => navigate("/get-offer")}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
-            >
+            <Button size="lg" onClick={() => navigate("/get-offer")}>
               Get Your Cash Offer
             </Button>
           </div>
