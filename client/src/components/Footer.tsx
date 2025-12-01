@@ -25,7 +25,7 @@ export default function Footer() {
                 <SiLinkedin className="h-4 w-4 text-accent-foreground" />
               </a>
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/profile.php?id=61572407202251"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover-elevate active-elevate-2 rounded-full p-2 bg-accent"
@@ -35,7 +35,7 @@ export default function Footer() {
                 <SiFacebook className="h-4 w-4 text-accent-foreground" />
               </a>
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/evergreen_land_investments"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover-elevate active-elevate-2 rounded-full p-2 bg-accent"
@@ -113,7 +113,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="tel:+19566006000"
+                  href="tel:+13466413237"
                   className="hover:text-primary transition-colors font-semibold"
                 >
                   (956) 600-6000
@@ -122,9 +122,7 @@ export default function Footer() {
               <li className="pt-2">
                 Operating Hours:
                 <br />
-                Monday - Friday: 9:00 AM - 6:00 PM
-                <br />
-                Saturday: 10:00 AM - 4:00 PM
+                Monday - Saturday: 8:00 AM - 4:00 PM PST
               </li>
             </ul>
           </div>
