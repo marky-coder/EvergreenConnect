@@ -25,7 +25,7 @@ export default function Footer() {
                 <SiLinkedin className="h-4 w-4 text-accent-foreground" />
               </a>
               <a
-                href="https://www.facebook.com/profile.php?id=61572407202251"
+                href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover-elevate active-elevate-2 rounded-full p-2 bg-accent"
@@ -35,7 +35,7 @@ export default function Footer() {
                 <SiFacebook className="h-4 w-4 text-accent-foreground" />
               </a>
               <a
-                href="https://www.instagram.com/evergreen_land_investments"
+                href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover-elevate active-elevate-2 rounded-full p-2 bg-accent"
@@ -98,7 +98,8 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-4">
+          {/* <-- Add the id "contact" here so Header's link scrolls to this */}
+          <div id="contact" className="space-y-4">
             <h4 className="font-semibold text-foreground">
               Contact Information
             </h4>
@@ -116,13 +117,20 @@ export default function Footer() {
                   href="tel:+13466413237"
                   className="hover:text-primary transition-colors font-semibold"
                 >
-                  (346) 641-3237
+                  346 641 3237
                 </a>
+              </li>
+              <li>
+                <span className="text-muted-foreground">
+                  12300 NE 33rd St, Vancouver, WA 98682
+                </span>
               </li>
               <li className="pt-2">
                 Operating Hours:
                 <br />
-                Monday - Saturday: 8:00 AM - 4:00 PM PST
+                Monday - Friday: 9:00 AM - 6:00 PM
+                <br />
+                Saturday: 10:00 AM - 4:00 PM
               </li>
             </ul>
           </div>
@@ -142,9 +150,7 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>
-              Copyright 2025 Invest with Evergreen LLC | All Rights Reserved
-            </p>
+            <p>Copyright 2025 Invest with Evergreen LLC | All Rights Reserved</p>
             <div className="flex gap-6">
               <a
                 href="#"
