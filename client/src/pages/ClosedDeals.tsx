@@ -19,16 +19,14 @@ interface DealLocation {
 }
 
 /**
- * ClosedDeals — finalized static map
- * - Uses calibrated geographic bounds (already computed) so pins land correctly.
- * - Keeps robust image-measure-based placement (intrinsic size + uniform scale).
- * - No edit controls, no calibration UI, no fallback banner.
+ * Final static ClosedDeals page with small global shift applied so
+ * the Colorado pin ("rio-grande-co") lands over the UT label as requested,
+ * and that same pixel delta is applied to all pins to preserve relative layout.
+ *
+ * To tweak: change GLOBAL_SHIFT.dx / GLOBAL_SHIFT.dy (pixels).
  */
 
-/* ====== CALIBRATED BOUNDS (from calibration tool) ======
-   These were computed from your clicks and real lat/lngs and
-   produce correct pin placement for your map image.
-*/
+/* Calibrated bounds (from your calibration step) */
 const CALIBRATED_BOUNDS = {
   minLng: -124.388835,
   maxLng: -76.927213,
@@ -36,12 +34,18 @@ const CALIBRATED_BOUNDS = {
   maxLat: 61.642249,
 };
 
+/* Global pixel shift applied to all pins (tweak these numbers for fine tuning).
+   Positive dx moves pins to the right; positive dy moves pins down.
+   I chose these values so the CO pin (rio-grande-co) moves onto the UT label.
+*/
+const GLOBAL_SHIFT = { dx: 30, dy: -4 };
+
 export default function ClosedDeals() {
   const [locations, setLocations] = useState<DealLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
 
-  // image intrinsic size + scale used for drawing
+  // image intrinsic size + uniform scale
   const [imgNatural, setImgNatural] = useState({ width: 1000, height: 589 });
   const [imgScale, setImgScale] = useState(1);
 
@@ -63,7 +67,7 @@ export default function ClosedDeals() {
   const updateSvgSize = () => {
     const container = document.querySelector(".container") as HTMLElement | null;
     const width = container ? Math.min(1200, container.clientWidth) : 1000;
-    const height = Math.round((width * 589) / 1000); // keep original aspect ratio
+    const height = Math.round((width * 589) / 1000);
     setSvgSize({ width, height });
   };
 
@@ -108,7 +112,6 @@ export default function ClosedDeals() {
     try {
       const response = await fetch("/api/deals/locations");
       if (!response.ok) {
-        // Quiet fallback to bundled JSON (we don't show a banner)
         setLocations(defaultData.locations.map(normalizeLocation));
         setIsLoading(false);
         return;
@@ -131,10 +134,10 @@ export default function ClosedDeals() {
     }
   };
 
-  // Use calibrated bounds for mapping
+  // Use calibrated bounds
   const { minLng, maxLng, minLat, maxLat } = CALIBRATED_BOUNDS;
 
-  // Map lat/lng -> pixel using image intrinsic size then apply uniform scale
+  // Map lat/lng -> intrinsic image pixels -> scaled display pixels, then apply global shift
   const latLngToXY = (lat: number, lng: number) => {
     const imgW = imgNatural.width;
     const imgH = imgNatural.height;
@@ -142,13 +145,18 @@ export default function ClosedDeals() {
     const xImg = ((lng - minLng) / (maxLng - minLng)) * imgW;
     const yImg = ((maxLat - lat) / (maxLat - minLat)) * imgH;
 
-    const x = xImg * imgScale;
-    const y = yImg * imgScale;
+    let x = xImg * imgScale;
+    let y = yImg * imgScale;
 
-    return {
-      x: Math.max(0, Math.min(svgSize.width, x)),
-      y: Math.max(0, Math.min(svgSize.height, y)),
-    };
+    // Apply the small global pixel shift (moves CO to cover the UT text area)
+    x += GLOBAL_SHIFT.dx;
+    y += GLOBAL_SHIFT.dy;
+
+    // Clamp into svg
+    x = Math.max(0, Math.min(svgSize.width, x));
+    y = Math.max(0, Math.min(svgSize.height, y));
+
+    return { x, y };
   };
 
   return (
