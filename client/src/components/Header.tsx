@@ -59,6 +59,7 @@ export default function Header() {
     { label: "Why Choose Us", id: "why-choose" },
     { label: "Closed Deals", id: "closed-deals", isPage: true },
     { label: "Testimonials", id: "testimonials", isPage: true },
+    { label: "Contact Us", id: "contact" },         // ← new
     { label: "Get Cash Offer", id: "get-offer", isPage: true },
   ];
 
