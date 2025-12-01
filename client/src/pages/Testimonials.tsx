@@ -1,117 +1,15 @@
 // client/src/pages/Testimonials.tsx
-import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Card, CardContent } from "@/components/ui/card";
+import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import { Button } from "@/components/ui/button";
-import {
-  Star,
-  Quote,
-  Video,
-  MessageSquare,
-  Loader2,
-  Upload as UploadIcon,
-} from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
-
-interface Testimonial {
-  name: string;
-  content: string;
-  rating: number;
-  type: "text";
-}
-
-interface VideoTestimonial {
-  id?: string;
-  name: string;
-  videoUrl: string;
-  testimonialText?: string;
-  thumbnail?: string;
-  rating: number;
-  type: "video";
-}
-
-type TestimonialType = Testimonial | VideoTestimonial;
-
-// Hardcoded testimonials are now removed - all testimonials loaded from API
 
 export default function Testimonials() {
-  const [activeTab, setActiveTab] = useState<"all" | "text" | "video">("all");
-  const [textTestimonials, setTextTestimonials] = useState<Testimonial[]>([]);
-  const [videoTestimonials, setVideoTestimonials] = useState<
-    VideoTestimonial[]
-  >([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const navigate = useNavigate();
-
-  // Load all approved testimonials from API
-  useEffect(() => {
-    loadApprovedTestimonials();
-  }, []);
-
-  const loadApprovedTestimonials = async () => {
-    try {
-      const response = await fetch("/api/testimonials/approved");
-      const data = await response.json();
-
-      if (data.success && data.testimonials) {
-        const texts: Testimonial[] = [];
-        const videos: VideoTestimonial[] = [];
-
-        data.testimonials.forEach((t: any) => {
-          // If it has video, add to videos array
-          if (t.hasVideo) {
-            videos.push({
-              id: t.id,
-              name: t.name,
-              videoUrl: t.videoUrl,
-              testimonialText: t.testimonialText,
-              rating: 5,
-              type: "video" as const,
-            });
-          }
-
-          // If it has text (and no video), add to text array
-          // Text testimonials with videos are shown in video section
-          if (t.testimonialText && !t.hasVideo) {
-            texts.push({
-              name: t.name,
-              content: t.testimonialText,
-              rating: 5,
-              type: "text" as const,
-            });
-          }
-        });
-
-        setTextTestimonials(texts);
-        setVideoTestimonials(videos);
-      }
-    } catch (error) {
-      console.error("Error loading testimonials:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const testimonials: TestimonialType[] = [
-    ...textTestimonials,
-    ...videoTestimonials,
-  ];
-
-  const displayTestimonials =
-    activeTab === "text"
-      ? textTestimonials
-      : activeTab === "video"
-      ? videoTestimonials
-      : testimonials;
-
   return (
     <div className="min-h-screen">
       <Header />
       <main className="pt-20">
-        {/* Hero Section */}
+        {/* Hero — Share Your Story button removed */}
         <section className="py-16 md:py-24 bg-primary/5">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto">
@@ -119,129 +17,22 @@ export default function Testimonials() {
                 Client Testimonials
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-8">
-                Hear what our satisfied clients have to say about their
-                experience working with Evergreen Land Investments
+                Hear what our satisfied clients have to say about their experience working with Evergreen Land Investments
               </p>
-              <div className="flex justify-center gap-4">
-                <Button
-                  size="lg"
-                  onClick={() => navigate("/testimonials/upload")}
-                  className="gap-2"
-                >
-                  <UploadIcon className="w-5 h-5" />
-                  Share Your Story
-                </Button>
-              </div>
+
+              {/* NOTE: "Share Your Story" removed as requested */}
             </div>
           </div>
         </section>
 
-        {/* Testimonials Grid */}
+        {/* Carousel Section (replaces Tabs / Filters) */}
         <section className="py-16 md:py-24 lg:py-32">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <Tabs
-              defaultValue="all"
-              className="w-full"
-              onValueChange={(v) => setActiveTab(v as any)}
-            >
-              <div className="flex justify-center mb-12">
-                <TabsList className="grid w-full max-w-md grid-cols-3">
-                  <TabsTrigger value="all" className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    All
-                  </TabsTrigger>
-                  <TabsTrigger value="text" className="flex items-center gap-2">
-                    <Quote className="h-4 w-4" />
-                    Written
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="video"
-                    className="flex items-center gap-2"
-                  >
-                    <Video className="h-4 w-4" />
-                    Video
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-
-              <TabsContent value="all" className="mt-0">
-                {isLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                    {testimonials.map((testimonial, index) => (
-                      <TestimonialCard
-                        key={
-                          testimonial.type === "video" && testimonial.id
-                            ? testimonial.id
-                            : index
-                        }
-                        testimonial={testimonial}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="text" className="mt-0">
-                {isLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : textTestimonials.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Quote className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-lg text-muted-foreground mb-4">
-                      No written testimonials yet
-                    </p>
-                    <Button onClick={() => navigate("/testimonials/upload")}>
-                      <UploadIcon className="w-4 h-4 mr-2" />
-                      Share Your Experience
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                    {textTestimonials.map((testimonial, index) => (
-                      <TestimonialCard key={index} testimonial={testimonial} />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="video" className="mt-0">
-                {isLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : videoTestimonials.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Video className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-lg text-muted-foreground mb-4">
-                      No video testimonials yet
-                    </p>
-                    <Button onClick={() => navigate("/testimonials/upload")}>
-                      <UploadIcon className="w-4 h-4 mr-2" />
-                      Be the First to Share
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                    {videoTestimonials.map((testimonial, index) => (
-                      <TestimonialCard
-                        key={testimonial.id || index}
-                        testimonial={testimonial}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+            <TestimonialsCarousel tiles={2} autoPlayMs={5000} />
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* CTA */}
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -250,13 +41,7 @@ export default function Testimonials() {
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
               Join our satisfied clients and experience the Evergreen difference
             </p>
-            <Button
-              size="lg"
-              onClick={() => {
-                // Navigate to the "Get Cash Offer" page (SPA navigation)
-                navigate("/get-offer");
-              }}
-            >
+            <Button size="lg" onClick={() => (window.location.href = "/get-offer")}>
               Get Your Cash Offer
             </Button>
           </div>
@@ -264,59 +49,5 @@ export default function Testimonials() {
       </main>
       <Footer />
     </div>
-  );
-}
-
-function TestimonialCard({ testimonial }: { testimonial: TestimonialType }) {
-  if (testimonial.type === "video") {
-    const videoTest = testimonial as VideoTestimonial;
-    return (
-      <Card className="overflow-hidden hover-elevate transition-all duration-300">
-        <CardContent className="p-0">
-          <div className="aspect-video w-full bg-muted">
-            <iframe
-              src={videoTest.videoUrl}
-              title={`Video testimonial from ${videoTest.name}`}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-          <div className="p-6">
-            <div className="flex gap-1 mb-3">
-              {[...Array(videoTest.rating)].map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-              ))}
-            </div>
-            <div className="font-bold text-lg text-foreground">
-              - {videoTest.name}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const textTest = testimonial as Testimonial;
-  return (
-    <Card className="hover-elevate transition-all duration-300 h-full flex flex-col">
-      <CardContent className="p-6 flex flex-col h-full">
-        <Quote className="h-8 w-8 text-primary/20 mb-4" />
-
-        <div className="flex gap-1 mb-4">
-          {[...Array(textTest.rating)].map((_, i) => (
-            <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-          ))}
-        </div>
-
-        <blockquote className="text-base text-foreground mb-6 leading-relaxed flex-grow">
-          "{textTest.content}"
-        </blockquote>
-
-        <div className="font-bold text-lg text-foreground">
-          - {textTest.name}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
