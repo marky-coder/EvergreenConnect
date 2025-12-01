@@ -26,6 +26,7 @@ export default function ClosedDeals() {
   const [locations, setLocations] = useState<DealLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [usedFallback, setUsedFallback] = useState(false);
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [nudges, setNudges] = useState<Nudges>({});
   const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
@@ -41,7 +42,7 @@ export default function ClosedDeals() {
         setNudges(parsed);
       }
     } catch (e) {
-      // ignore
+      // ignoring parse errors
     }
   }, []);
 
@@ -55,60 +56,96 @@ export default function ClosedDeals() {
   const updateSvgSize = () => {
     const container = document.querySelector(".container") as HTMLElement | null;
     const width = container ? Math.min(1200, container.clientWidth) : 1000;
-    const height = Math.round((width * 589) / 1000);
+    const height = Math.round((width * 589) / 1000); // keep same aspect ratio as original
     setSvgSize({ width, height });
   };
 
+  // Helper: normalize location objects from many possible server shapes
+  const normalizeLocation = (raw: any): DealLocation => {
+    const id = raw.id ?? raw.name ?? `${raw.lat ?? raw.latitude}-${raw.lng ?? raw.lon ?? raw.longitude}`;
+    // accept many lat/lng naming variants
+    const latVal = raw.lat ?? raw.latitude ?? raw.lat_deg ?? raw.latDeg;
+    const lngVal = raw.lng ?? raw.lon ?? raw.longitude ?? raw.lng_deg ?? raw.lngDeg;
+    const lat = typeof latVal === "string" ? parseFloat(latVal) : latVal;
+    const lng = typeof lngVal === "string" ? parseFloat(lngVal) : lngVal;
+
+    const addedAt = raw.addedAt ?? raw.added_at ?? new Date().toISOString();
+
+    return {
+      id: String(id),
+      lat: Number.isFinite(lat) ? lat : 0,
+      lng: Number.isFinite(lng) ? lng : 0,
+      name: raw.name,
+      city: raw.city,
+      state: raw.state,
+      addedAt,
+    };
+  };
+
   const loadLocations = async () => {
+    setIsLoading(true);
+    setFallbackReason(null);
     try {
+      console.log("[ClosedDeals] requesting locations from /api/deals/locations");
       const response = await fetch("/api/deals/locations");
-      if (response.ok) {
-        const data = await response.json();
-        if (data && Array.isArray(data.locations) && data.locations.length > 0) {
-          setLocations(data.locations);
-          setUsedFallback(false);
-        } else {
-          setLocations(defaultData.locations);
-          setUsedFallback(true);
-        }
+      if (!response.ok) {
+        // Server returned a non-200 status (404, 500, etc.)
+        const statusText = `${response.status} ${response.statusText}`;
+        console.warn(`[ClosedDeals] server responded ${statusText}`);
+        setFallbackReason(`Server responded ${statusText}`);
+        setLocations(defaultData.locations.map(normalizeLocation));
+        setUsedFallback(true);
+        return;
+      }
+
+      // Attempt to parse JSON and accept a couple of shapes
+      const data = await response.json();
+      console.log("[ClosedDeals] raw API response:", data);
+
+      // Common shapes:
+      // 1) { locations: [ ... ] }
+      // 2) [ ... ] (top-level array)
+      let rawLocations: any[] | undefined = undefined;
+      if (Array.isArray(data)) rawLocations = data;
+      else if (Array.isArray(data?.locations)) rawLocations = data.locations;
+      else if (Array.isArray(data?.data?.locations)) rawLocations = data.data.locations;
+
+      if (rawLocations && rawLocations.length > 0) {
+        const normalized = rawLocations.map(normalizeLocation);
+        setLocations(normalized);
+        setUsedFallback(false);
+        console.log("[ClosedDeals] using locations from API", normalized.slice(0, 5));
       } else {
-        setLocations(defaultData.locations);
+        // No usable data from API - fallback
+        console.warn("[ClosedDeals] API returned no locations, using bundled fallback.");
+        setFallbackReason("API returned no locations");
+        setLocations(defaultData.locations.map(normalizeLocation));
         setUsedFallback(true);
       }
-    } catch (err) {
-      console.error("Error fetching locations API — using local data.", err);
-      setLocations(defaultData.locations);
+    } catch (err: any) {
+      console.error("[ClosedDeals] error fetching locations:", err);
+      setFallbackReason(String(err?.message ?? err));
+      setLocations(defaultData.locations.map(normalizeLocation));
       setUsedFallback(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Mercator-style lat -> y transform + linear lng -> x
+  // Equirectangular (linear) mapping: longitude -> x; latitude -> y (linear)
+  // This often matches static map images (non-mercator). Tune the bounds if needed.
   const latLngToXY = (lat: number, lng: number) => {
     const { width: svgWidth, height: svgHeight } = svgSize;
-    // Geographic bounds for continental US (approx)
+
+    // Geographic bounds tuned for continental US
     const minLng = -125;
     const maxLng = -66.9;
     const minLat = 24.5;
     const maxLat = 49.4;
 
-    // X linear
     const x = ((lng - minLng) / (maxLng - minLng)) * svgWidth;
-
-    // Mercator Y
-    const toRad = (d: number) => (d * Math.PI) / 180;
-    const merc = (latDeg: number) =>
-      Math.log(
-        Math.tan(Math.PI / 4 + toRad(Math.max(Math.min(latDeg, maxLat - 0.0001), minLat + 0.0001)) / 2)
-      );
-
-    const mercMax = merc(maxLat);
-    const mercMin = merc(minLat);
-    const mercLat = merc(lat);
-
-    const normalizedY = (mercMax - mercLat) / (mercMax - mercMin);
-    const y = normalizedY * svgHeight;
+    // Note: top of SVG is y=0, so larger lat (north) should map to smaller y
+    const y = ((maxLat - lat) / (maxLat - minLat)) * svgHeight;
 
     return { x: Math.max(0, Math.min(svgWidth, x)), y: Math.max(0, Math.min(svgHeight, y)) };
   };
@@ -123,7 +160,9 @@ export default function ClosedDeals() {
   const onPointerDown = (e: React.PointerEvent, id: string) => {
     if (!isEditMode) return;
     const target = e.currentTarget as HTMLElement;
-    (target as any).setPointerCapture(e.pointerId);
+    try {
+      (target as any).setPointerCapture(e.pointerId);
+    } catch {}
     dragState.current = {
       draggingId: id,
       originMouseX: e.clientX,
@@ -171,12 +210,20 @@ export default function ClosedDeals() {
     const text = JSON.stringify(nudges, null, 2);
     try {
       await navigator.clipboard.writeText(text);
-      console.log("Nudges copied to clipboard:", text);
       alert("Nudges copied to clipboard. Paste them into your code or a file.");
     } catch (e) {
       console.log("Nudges:", text);
       alert("Could not copy to clipboard — check console for JSON.");
     }
+  };
+
+  const clearNudges = () => {
+    if (!confirm("Clear all saved nudges (local offsets)? This cannot be undone locally).")) return;
+    setNudges({});
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch {}
+    alert("Nudges cleared locally. Reload page to be sure.");
   };
 
   return (
@@ -202,10 +249,15 @@ export default function ClosedDeals() {
               <Button size="sm" variant="outline" className="ml-3" onClick={exportNudges}>
                 Export Nudges
               </Button>
+              <Button size="sm" variant="destructive" className="ml-3" onClick={clearNudges}>
+                Clear Nudges
+              </Button>
             </div>
 
             <div className="text-sm text-muted-foreground">
-              {isEditMode ? "Drag pins to adjust positions. Click Export Nudges to copy adjustments." : "Toggle Edit Pins to adjust locations."}
+              {isEditMode
+                ? "Drag pins to adjust positions. Click Export Nudges to copy adjustments."
+                : "Toggle Edit Pins to adjust locations."}
             </div>
           </div>
 
@@ -226,7 +278,14 @@ export default function ClosedDeals() {
                     onPointerLeave={onPointerUp}
                   >
                     {/* background image */}
-                    <image href="/us.jpg" x="0" y="0" width={svgSize.width} height={svgSize.height} />
+                    <image
+                      href="/us.jpg"
+                      x="0"
+                      y="0"
+                      width={svgSize.width}
+                      height={svgSize.height}
+                      preserveAspectRatio="xMinYMin meet"
+                    />
 
                     {/* pins */}
                     {locations.map((loc) => {
@@ -254,12 +313,8 @@ export default function ClosedDeals() {
                           />
 
                           <title>
-                            {loc.name ||
-                              (loc.city && loc.state
-                                ? `${loc.city}, ${loc.state}`
-                                : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}
+                            {loc.name || (loc.city && loc.state ? `${loc.city}, ${loc.state}` : `Deal Location (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})`)}
                           </title>
-
                         </g>
                       );
                     })}
@@ -276,7 +331,11 @@ export default function ClosedDeals() {
 
                   {usedFallback && (
                     <div className="mt-4 text-sm text-yellow-700">
-                      Note: showing bundled locations because the server API was unavailable (fallback).
+                      <div>Note: showing bundled locations because the server API was unavailable (fallback).</div>
+                      {fallbackReason && <div className="mt-1 text-xs text-yellow-800">Reason: {fallbackReason}</div>}
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Check the server route <code>/api/deals/locations</code> (should return JSON). See console for details.
+                      </div>
                     </div>
                   )}
                 </div>
@@ -285,12 +344,8 @@ export default function ClosedDeals() {
           )}
 
           <div className="text-center mt-12 max-w-2xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Ready to Join Them?
-            </h2>
-            <p className="text-lg text-muted-foreground mb-6">
-              Let us help you close a deal on your land property today
-            </p>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Ready to Join Them?</h2>
+            <p className="text-lg text-muted-foreground mb-6">Let us help you close a deal on your land property today</p>
 
             <Button size="lg" onClick={() => navigate("/get-offer")}>
               Get Your Cash Offer
