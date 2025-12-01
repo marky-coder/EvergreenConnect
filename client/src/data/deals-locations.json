@@ -1,19 +1,109 @@
 {
   "locations": [
-    { "id": "brooks-tx", "lat": 27.2173, "lng": -98.144,   "name": "Brooks County, TX",        "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "madison-tn","lat": 35.6120, "lng": -88.8135, "name": "Madison County, TN",       "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "pickens-sc", "lat": 34.8834, "lng": -82.7069, "name": "Pickens County, SC",       "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "willacy-tx", "lat": 26.4597, "lng": -97.7872, "name": "Willacy County, TX",       "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "clay-nc",    "lat": 35.0165, "lng": -84.6937, "name": "Clay County, NC",          "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "marion-fl",  "lat": 29.1872, "lng": -82.1401, "name": "Marion County, FL",        "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "shasta-ca",  "lat": 40.5865, "lng": -122.3917,"name": "Shasta County, CA",        "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "siskiyou-ca","lat": 41.7286, "lng": -122.6348,"name": "Siskiyou County, CA",      "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "apache-az",  "lat": 34.5086, "lng": -109.36,  "name": "Apache County, AZ",        "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "yamhill-or", "lat": 45.2138, "lng": -123.2043,"name": "Yamhill County, OR",       "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "rio-grande-co","lat": 37.6791,"lng": -106.3579,"name": "Rio Grande County, CO",    "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "valencia-nm","lat": 34.5181, "lng": -106.7659,"name": "Valencia County, NM",      "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "beaufort-nc","lat": 34.7208, "lng": -76.6522, "name": "Beaufort, NC",            "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "cass-tx",    "lat": 33.0186, "lng": -94.2247, "name": "Cass County, TX",         "addedAt": "2025-12-01T00:00:00.000Z" },
-    { "id": "columbus-nc","lat": 35.3259, "lng": -82.8768, "name": "Columbus, NC",            "addedAt": "2025-12-01T00:00:00.000Z" }
+    {
+      "id": "brooks-tx",
+      "lat": 27.2173,
+      "lng": -98.144,
+      "name": "Brooks County, TX",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "madison-tn",
+      "lat": 35.612,
+      "lng": -88.8135,
+      "name": "Madison County, TN",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "pickens-sc",
+      "lat": 34.318063,
+      "lng": -77.889796,
+      "name": "Pickens County, SC",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "willacy-tx",
+      "lat": 24.490863,
+      "lng": -95.663824,
+      "name": "Willacy County, TX",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "clay-nc",
+      "lat": 32.454036,
+      "lng": -85.79762,
+      "name": "Clay County, NC",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "marion-fl",
+      "lat": 30.541664,
+      "lng": -79.423109,
+      "name": "Marion County, FL",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "shasta-ca",
+      "lat": 36.339672,
+      "lng": -119.707675,
+      "name": "Shasta County, CA",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "siskiyou-ca",
+      "lat": 40.544897,
+      "lng": -121.650111,
+      "name": "Siskiyou County, CA",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "apache-az",
+      "lat": 32.966265,
+      "lng": -111.551369,
+      "name": "Apache County, AZ",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "yamhill-or",
+      "lat": 48.35381,
+      "lng": -119.942019,
+      "name": "Yamhill County, OR",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "rio-grande-co",
+      "lat": 38.09188,
+      "lng": -104.866705,
+      "name": "Rio Grande County, CO",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "valencia-nm",
+      "lat": 32.509023,
+      "lng": -106.240579,
+      "name": "Valencia County, NM",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "beaufort-nc",
+      "lat": 34.13465,
+      "lng": -75.307502,
+      "name": "Beaufort, NC",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "cass-tx",
+      "lat": 21.934145,
+      "lng": -78.444821,
+      "name": "Cass County, TX",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "columbus-nc",
+      "lat": 33.204666,
+      "lng": -79.370765,
+      "name": "Columbus, NC",
+      "addedAt": "2025-12-01T00:00:00.000Z"
+    }
   ]
 }
