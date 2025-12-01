@@ -18,15 +18,7 @@ interface DealLocation {
   addedAt: string;
 }
 
-/**
- * Final static ClosedDeals page with small global shift applied so
- * the Colorado pin ("rio-grande-co") lands over the UT label as requested,
- * and that same pixel delta is applied to all pins to preserve relative layout.
- *
- * To tweak: change GLOBAL_SHIFT.dx / GLOBAL_SHIFT.dy (pixels).
- */
-
-/* Calibrated bounds (from your calibration step) */
+/* Calibrated bounds previously computed */
 const CALIBRATED_BOUNDS = {
   minLng: -124.388835,
   maxLng: -76.927213,
@@ -34,20 +26,38 @@ const CALIBRATED_BOUNDS = {
   maxLat: 61.642249,
 };
 
-/* Global pixel shift applied to all pins (tweak these numbers for fine tuning).
-   Positive dx moves pins to the right; positive dy moves pins down.
-   I chose these values so the CO pin (rio-grande-co) moves onto the UT label.
-*/
-const GLOBAL_SHIFT = { dx: 30, dy: -4 };
+/* Default global shift that you had previously (we keep it as initial value) */
+const DEFAULT_GLOBAL_SHIFT = { dx: 30, dy: -4 };
+
+/* Storage key to persist the global shift (optional) */
+const SHIFT_KEY = "closedDeals_global_shift_v1";
+
+/**
+ * ClosedDeals: static map with live nudge controls
+ * - Use the nudge controls to shift all pins by the same pixel offset
+ * - Save the final shift to localStorage or Export it as JSON to ask me to bake it into the file permanently
+ */
 
 export default function ClosedDeals() {
   const [locations, setLocations] = useState<DealLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [svgSize, setSvgSize] = useState({ width: 1000, height: 589 });
 
-  // image intrinsic size + uniform scale
+  // image intrinsic size + scale
   const [imgNatural, setImgNatural] = useState({ width: 1000, height: 589 });
   const [imgScale, setImgScale] = useState(1);
+
+  // live global shift (pixels). Load from localStorage if present.
+  const [shift, setShift] = useState<{ dx: number; dy: number }>(() => {
+    try {
+      const raw = localStorage.getItem(SHIFT_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.dx === "number" && typeof parsed.dy === "number") return parsed;
+      }
+    } catch {}
+    return DEFAULT_GLOBAL_SHIFT;
+  });
 
   const navigate = useNavigate();
 
@@ -122,11 +132,8 @@ export default function ClosedDeals() {
       else if (Array.isArray(data?.locations)) rawLocations = data.locations;
       else if (Array.isArray(data?.data?.locations)) rawLocations = data.data.locations;
 
-      if (rawLocations && rawLocations.length > 0) {
-        setLocations(rawLocations.map(normalizeLocation));
-      } else {
-        setLocations(defaultData.locations.map(normalizeLocation));
-      }
+      if (rawLocations && rawLocations.length > 0) setLocations(rawLocations.map(normalizeLocation));
+      else setLocations(defaultData.locations.map(normalizeLocation));
     } catch {
       setLocations(defaultData.locations.map(normalizeLocation));
     } finally {
@@ -134,10 +141,9 @@ export default function ClosedDeals() {
     }
   };
 
-  // Use calibrated bounds
   const { minLng, maxLng, minLat, maxLat } = CALIBRATED_BOUNDS;
 
-  // Map lat/lng -> intrinsic image pixels -> scaled display pixels, then apply global shift
+  // Map lat/lng -> scaled pixel coords, then apply global shift
   const latLngToXY = (lat: number, lng: number) => {
     const imgW = imgNatural.width;
     const imgH = imgNatural.height;
@@ -145,18 +151,53 @@ export default function ClosedDeals() {
     const xImg = ((lng - minLng) / (maxLng - minLng)) * imgW;
     const yImg = ((maxLat - lat) / (maxLat - minLat)) * imgH;
 
-    let x = xImg * imgScale;
-    let y = yImg * imgScale;
+    let x = xImg * imgScale + shift.dx;
+    let y = yImg * imgScale + shift.dy;
 
-    // Apply the small global pixel shift (moves CO to cover the UT text area)
-    x += GLOBAL_SHIFT.dx;
-    y += GLOBAL_SHIFT.dy;
-
-    // Clamp into svg
     x = Math.max(0, Math.min(svgSize.width, x));
     y = Math.max(0, Math.min(svgSize.height, y));
 
     return { x, y };
+  };
+
+  // Nudge helpers
+  const applyNudge = (dx: number, dy: number) => {
+    setShift((s) => ({ dx: s.dx + dx, dy: s.dy + dy }));
+  };
+
+  const saveShift = () => {
+    try {
+      localStorage.setItem(SHIFT_KEY, JSON.stringify(shift));
+      alert(`Shift saved: dx=${shift.dx}, dy=${shift.dy}`);
+    } catch {
+      alert("Failed to save shift to localStorage.");
+    }
+  };
+
+  const resetShift = () => {
+    setShift(DEFAULT_GLOBAL_SHIFT);
+    try {
+      localStorage.removeItem(SHIFT_KEY);
+    } catch {}
+    alert("Shift reset to default.");
+  };
+
+  const exportShift = async () => {
+    const payload = JSON.stringify(shift, null, 2);
+    try {
+      await navigator.clipboard.writeText(payload);
+      alert("Shift JSON copied to clipboard.");
+    } catch {
+      const blob = new Blob([payload], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "closed-deals-shift.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
@@ -170,9 +211,38 @@ export default function ClosedDeals() {
             <p className="text-lg text-muted-foreground">See where we've successfully helped landowners across the United States</p>
           </div>
 
-          <div className="flex items-center justify-between mb-4 gap-4">
-            <div>{/* static site — no edit controls */}</div>
-            <div className="text-sm text-muted-foreground">Map is static — pins are placed from bundled locations and calibrated bounds.</div>
+          <div className="flex items-start justify-between mb-4 gap-4">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <strong className="text-sm">Pin Nudge (global)</strong>
+                <div style={{ fontSize: 12, color: "#94a3b8" }}>dx: {shift.dx}px</div>
+                <div style={{ fontSize: 12, color: "#94a3b8" }}>dy: {shift.dy}px</div>
+              </div>
+
+              <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                {/* X nudges */}
+                <Button size="sm" onClick={() => applyNudge(-5, 0)}>← -5</Button>
+                <Button size="sm" onClick={() => applyNudge(-1, 0)}>← -1</Button>
+                <Button size="sm" onClick={() => applyNudge(1, 0)}>+1 →</Button>
+                <Button size="sm" onClick={() => applyNudge(5, 0)}>+5 →</Button>
+
+                {/* Y nudges */}
+                <Button size="sm" onClick={() => applyNudge(0, -5)}>↑ -5</Button>
+                <Button size="sm" onClick={() => applyNudge(0, -1)}>↑ -1</Button>
+                <Button size="sm" onClick={() => applyNudge(0, 1)}>↓ +1</Button>
+                <Button size="sm" onClick={() => applyNudge(0, 5)}>↓ +5</Button>
+
+                <Button size="sm" variant="outline" onClick={saveShift}>Save shift</Button>
+                <Button size="sm" variant="outline" onClick={exportShift}>Export shift</Button>
+                <Button size="sm" variant="destructive" onClick={resetShift}>Reset</Button>
+              </div>
+
+              <div style={{ fontSize: 12, color: "#94a3b8" }}>
+                Tip: use small increments (±1) to center a single pin exactly, then save. If you want me to bake the final dx/dy into the code, export and paste the JSON here.
+              </div>
+            </div>
+
+            <div className="text-sm text-muted-foreground">Use the nudge buttons to position pins. Save shift to persist in this browser.</div>
           </div>
 
           {isLoading ? (
