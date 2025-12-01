@@ -58,21 +58,55 @@ export default function ClosedDeals() {
     }
   };
 
-  // Convert lat/lng to SVG coordinates for the US map
-  // US bounds: lat 24.5-49.4, lng -125 to -66.9
+  /**
+   * Mercator-style projection mapping lat/lng → SVG x,y
+   * The SVG is 1000x589 and the geographic bounds chosen correspond
+   * to continental US approximations. This yields much better vertical placement
+   * than a linear latitude mapping.
+   */
   const latLngToXY = (lat: number, lng: number) => {
     const svgWidth = 1000;
     const svgHeight = 589;
 
+    // Geographic bounds (continental US approximation)
     const minLng = -125;
     const maxLng = -66.9;
     const minLat = 24.5;
     const maxLat = 49.4;
 
+    // X: linear mapping of longitude to svg x
     const x = ((lng - minLng) / (maxLng - minLng)) * svgWidth;
-    const y = ((maxLat - lat) / (maxLat - minLat)) * svgHeight;
 
-    return { x, y };
+    // Y: use Mercator transform for latitude to approximate map vertical scaling
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const mercator = (latDeg: number) => Math.log(Math.tan(Math.PI / 4 + toRad(latDeg) / 2));
+
+    const mercMax = mercator(maxLat);
+    const mercMin = mercator(minLat);
+    const mercLat = mercator(Math.max(minLat + 0.0001, Math.min(maxLat - 0.0001, lat))); // clamp to avoid infinities
+
+    // normalized position (0..1) from top to bottom
+    const normalizedY = (mercMax - mercLat) / (mercMax - mercMin);
+    const y = normalizedY * svgHeight;
+
+    // clamp to svg bounds just in case
+    const clampedX = Math.max(0, Math.min(svgWidth, x));
+    const clampedY = Math.max(0, Math.min(svgHeight, y));
+
+    return { x: clampedX, y: clampedY };
+  };
+
+  /**
+   * Nudges are optional pixel offsets to correct any remaining pins after
+   * projection. Add entries keyed by `location.id` and supply `dx` (right positive)
+   * and/or `dy` (down positive). Example:
+   * { "beaufort-nc": { dx: 8, dy: -6 } }
+   */
+  const nudges: Record<string, { dx?: number; dy?: number }> = {
+    // After testing you can add small adjustments here if a pin is slightly off.
+    // Example placeholders (commented out):
+    // "beaufort-nc": { dx: 6, dy: -4 },
+    // "columbus-nc": { dx: -8, dy: 2 },
   };
 
   return (
@@ -124,7 +158,11 @@ export default function ClosedDeals() {
 
                     {/* Pins for each location */}
                     {locations.map((location) => {
-                      const { x, y } = latLngToXY(location.lat, location.lng);
+                      const raw = latLngToXY(location.lat, location.lng);
+                      const n = nudges[location.id] || { dx: 0, dy: 0 };
+                      const x = raw.x + (n.dx || 0);
+                      const y = raw.y + (n.dy || 0);
+
                       return (
                         <g key={location.id}>
                           {/* Pin circle with pulsing animation */}
