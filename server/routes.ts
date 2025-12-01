@@ -24,8 +24,11 @@ import {
 } from "./deals-storage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // --- Small admin middleware and endpoints ---
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "evergreen-admin-2025";
+  // --- Admin auth configuration ---
+  // NOTE: For convenience the password is hardcoded here as requested.
+  // Security WARNING: Hardcoding secrets in code is unsafe for production.
+  // Replace this with process.env.ADMIN_PASSWORD in production environments.
+  const ADMIN_PASSWORD = "VitaTalent2025!";
 
   function requireAdmin(req: any, res: any, next: any) {
     if (req?.session?.isAdmin) {
@@ -35,7 +38,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
-  // Admin login — sets req.session.isAdmin = true
+  // Admin login — sets req.session.isAdmin = true when password matches
   app.post("/api/admin/login", (req, res) => {
     try {
       const { password } = req.body || {};
@@ -77,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // --- Existing routes (unchanged) ---
+  // --- Existing routes (unchanged otherwise) ---
   // API route to submit cash offer form
   app.post("/api/submit-offer", async (req, res) => {
     try {
@@ -370,7 +373,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Fallback / other routes omitted for brevity...
-  // (The rest of your server routes remain the same)
+  // Fallback / other routes omitted for brevity (if any)
   return createServer(app);
 }
