@@ -128,9 +128,7 @@ export default function Footer() {
               <li className="pt-2">
                 Operating Hours:
                 <br />
-                Monday - Friday: 9:00 AM - 6:00 PM
-                <br />
-                Saturday: 10:00 AM - 4:00 PM
+                Monday - Saturday: 8:00 AM - 4:00 PM
               </li>
             </ul>
           </div>
