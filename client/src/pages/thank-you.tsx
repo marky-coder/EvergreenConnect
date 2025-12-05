@@ -1,3 +1,4 @@
+// src/pages/thank-you.tsx
 import React, { useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -78,8 +79,8 @@ export default function ThankYou() {
             <div className="max-w-3xl mx-auto text-center">
               <p className="text-sm text-muted-foreground">
                 If you need immediate assistance, call us at{" "}
-                <a href="tel:555-123-4567" className="text-primary underline">
-                  (555) 123-4567
+                <a href="tel:3466413237" className="text-primary underline">
+                  (346) 641-3237
                 </a>
                 . Otherwise, someone will be in touch shortly.
               </p>
