@@ -13,6 +13,7 @@ import TestimonialsAdmin from "@/pages/TestimonialsAdmin";
 import ClosedDeals from "@/pages/ClosedDeals";
 import ClosedDealsAdmin from "@/pages/ClosedDealsAdmin";
 import NotFound from "@/pages/not-found";
+import ThankYou from "@/pages/thank-you"; // <-- ADD THIS LINE
 
 function App() {
   return (
@@ -27,6 +28,10 @@ function App() {
           <Route path="/closed-deals" element={<ClosedDeals />} />
           <Route path="/closed-deals/admin" element={<ClosedDealsAdmin />} />
           <Route path="/get-offer" element={<GetOffer />} />
+
+          {/* Hidden thank-you route — NOT linked anywhere in the UI */}
+          <Route path="/thank-you" element={<ThankYou />} />
+
           {/* catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
