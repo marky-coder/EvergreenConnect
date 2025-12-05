@@ -1,109 +1,27 @@
-import { useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import {
-  DollarSign,
-  Home,
-  MapPin,
-  Phone,
-  Mail,
-  User,
-  Calendar,
-  Loader2,
-} from "lucide-react";
+import { DollarSign, Home, MapPin, Calendar } from "lucide-react";
 
 export default function GetOffer() {
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    propertyAddress: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    propertyType: "",
-    propertyCondition: "",
-    desiredTimeline: "",
-    additionalInfo: "",
-  });
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/submit-offer", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast({
-          title: "✅ Success!",
-          description:
-            "Your cash offer request has been submitted. We'll contact you within 24 hours!",
-        });
-
-        // Reset form
-        setFormData({
-          firstName: "",
-          lastName: "",
-          email: "",
-          phone: "",
-          propertyAddress: "",
-          city: "",
-          state: "",
-          zipCode: "",
-          propertyType: "",
-          propertyCondition: "",
-          desiredTimeline: "",
-          additionalInfo: "",
-        });
-      } else {
-        toast({
-          title: "❌ Error",
-          description:
-            data.error || "Failed to submit your request. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      toast({
-        title: "❌ Error",
-        description:
-          "Failed to submit your request. Please try again or contact us directly.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+  useEffect(() => {
+    // Inject the GHL embed script once and avoid duplicate injection on client-side route changes
+    if (!document.querySelector('script[data-ghl-form-embed="true"]')) {
+      const script = document.createElement("script");
+      script.src = "https://link.msgsndr.com/js/form_embed.js";
+      script.async = true;
+      script.defer = true;
+      script.setAttribute("data-ghl-form-embed", "true");
+      document.body.appendChild(script);
+      // intentionally not removing the script on unmount so it persists across navigation
     }
-  };
+  }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const iframeHeight = 811; // keep in sync with data-height on iframe
 
   return (
     <div className="min-h-screen">
@@ -174,7 +92,7 @@ export default function GetOffer() {
           </div>
         </section>
 
-        {/* Form Section */}
+        {/* Form/Card Section — replaced with GHL iframe */}
         <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <Card className="max-w-4xl mx-auto">
@@ -183,243 +101,57 @@ export default function GetOffer() {
                   Property Information
                 </CardTitle>
               </CardHeader>
+
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Personal Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                      <User className="h-5 w-5 text-primary" />
-                      Your Information
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name *</Label>
-                        <Input
-                          id="firstName"
-                          name="firstName"
-                          value={formData.firstName}
-                          onChange={handleChange}
-                          required
-                          placeholder="John"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name *</Label>
-                        <Input
-                          id="lastName"
-                          name="lastName"
-                          value={formData.lastName}
-                          onChange={handleChange}
-                          required
-                          placeholder="Doe"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email *</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                            placeholder="john@example.com"
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone *</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            required
-                            placeholder="(555) 123-4567"
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-                    </div>
+                {/* Keep the visual card but embed the GHL iframe */}
+                <div
+                  ref={containerRef}
+                  className="rounded-lg overflow-hidden"
+                  aria-live="polite"
+                >
+                  {/* wrapper must have an explicit height because iframe uses height:100% */}
+                  <div className="w-full" style={{ height: iframeHeight }}>
+                    <iframe
+                      src="https://api.leadconnectorhq.com/widget/form/AIvFxy2eO6D76DJgm48Q"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        border: "none",
+                        borderRadius: "3px",
+                      }}
+                      id="inline-AIvFxy2eO6D76DJgm48Q"
+                      data-layout="{'id':'INLINE'}"
+                      data-trigger-type="alwaysShow"
+                      data-trigger-value=""
+                      data-activation-type="alwaysActivated"
+                      data-activation-value=""
+                      data-deactivation-type="neverDeactivate"
+                      data-deactivation-value=""
+                      data-form-name="Get Your Free Cash Offer"
+                      data-height={String(iframeHeight)}
+                      data-layout-iframe-id="inline-AIvFxy2eO6D76DJgm48Q"
+                      data-form-id="AIvFxy2eO6D76DJgm48Q"
+                      title="Get Your Free Cash Offer"
+                      aria-label="Get Your Free Cash Offer form"
+                    />
                   </div>
 
-                  {/* Property Information */}
-                  <div className="space-y-4 pt-6 border-t">
-                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-primary" />
-                      Property Details
-                    </h3>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="propertyAddress">
-                        Property Address *
-                      </Label>
-                      <Input
-                        id="propertyAddress"
-                        name="propertyAddress"
-                        value={formData.propertyAddress}
-                        onChange={handleChange}
-                        required
-                        placeholder="123 Main Street"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="city">City *</Label>
-                        <Input
-                          id="city"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                          required
-                          placeholder="Houston"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="state">State *</Label>
-                        <Input
-                          id="state"
-                          name="state"
-                          value={formData.state}
-                          onChange={handleChange}
-                          required
-                          placeholder="TX"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="zipCode">ZIP Code *</Label>
-                        <Input
-                          id="zipCode"
-                          name="zipCode"
-                          value={formData.zipCode}
-                          onChange={handleChange}
-                          required
-                          placeholder="77001"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="propertyType">Property Type *</Label>
-                        <select
-                          id="propertyType"
-                          name="propertyType"
-                          value={formData.propertyType}
-                          onChange={handleChange as any}
-                          required
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        >
-                          <option value="">Select type...</option>
-                          <option value="single-family">
-                            Single Family Home
-                          </option>
-                          <option value="multi-family">
-                            Multi-Family Home
-                          </option>
-                          <option value="condo">Condo</option>
-                          <option value="townhouse">Townhouse</option>
-                          <option value="land">Land/Lot</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="propertyCondition">
-                          Property Condition *
-                        </Label>
-                        <select
-                          id="propertyCondition"
-                          name="propertyCondition"
-                          value={formData.propertyCondition}
-                          onChange={handleChange as any}
-                          required
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        >
-                          <option value="">Select condition...</option>
-                          <option value="excellent">Excellent</option>
-                          <option value="good">Good</option>
-                          <option value="fair">Fair</option>
-                          <option value="needs-repair">Needs Repair</option>
-                          <option value="major-repair">
-                            Major Repair Needed
-                          </option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="desiredTimeline">
-                        Desired Timeline *
-                      </Label>
-                      <select
-                        id="desiredTimeline"
-                        name="desiredTimeline"
-                        value={formData.desiredTimeline}
-                        onChange={handleChange as any}
-                        required
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  {/* noscript fallback */}
+                  <div className="p-4 text-sm text-gray-700">
+                    <noscript>
+                      It looks like JavaScript is disabled in your browser.
+                      Open the form directly:{" "}
+                      <a
+                        href="https://api.leadconnectorhq.com/widget/form/AIvFxy2eO6D76DJgm48Q"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
                       >
-                        <option value="">Select timeline...</option>
-                        <option value="asap">ASAP</option>
-                        <option value="1-month">Within 1 month</option>
-                        <option value="3-months">1-3 months</option>
-                        <option value="6-months">3-6 months</option>
-                        <option value="flexible">Flexible</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="additionalInfo">
-                        Additional Information (Optional)
-                      </Label>
-                      <Textarea
-                        id="additionalInfo"
-                        name="additionalInfo"
-                        value={formData.additionalInfo}
-                        onChange={handleChange}
-                        placeholder="Tell us anything else about your property or situation..."
-                        rows={4}
-                      />
-                    </div>
+                        Get Your Free Cash Offer
+                      </a>
+                    </noscript>
                   </div>
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full text-lg"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      "Get My Free Cash Offer"
-                    )}
-                  </Button>
-
-                  <p className="text-sm text-center text-muted-foreground">
-                    By submitting this form, you agree to receive communications
-                    from Evergreen Land Investments
-                  </p>
-                </form>
+                </div>
               </CardContent>
             </Card>
           </div>
