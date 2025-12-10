@@ -1,3 +1,4 @@
+// client/src/components/TeamSection.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import ivyPhoto from "@assets/ivy-baker-photo.png";
 import ayatPhoto from "@assets/ayat-ayman-photo.png";
@@ -15,7 +16,9 @@ import shayPhoto from "@assets/shay-magdi-photo.png";
 import noraPhoto from "@assets/nora-zaki-photo.png";
 import markAnthonyPhoto from "@assets/mark-anthony-photo.png";
 import lindseyJohnsonPhoto from "@assets/lindsey-johnson-photo.jpeg";
-import kateImperialPhoto from "@assets/kate-imperial-photo.png"; // ⬅️ Kate
+import kateImperialPhoto from "@assets/kate-imperial-photo.png";
+
+import Reveal from "@/components/Reveal";
 
 const teamMembers = [
   {
@@ -27,7 +30,6 @@ const teamMembers = [
     name: "Nathaniel Brimlow",
     role: "Founder/CEO",
     image: nathanielPhoto,
-    // much tighter crop + slightly pull up to remove white gap
     imageScale: "scale-[1.45] -translate-y-2 object-top",
   },
   {
@@ -110,7 +112,6 @@ const teamMembers = [
     name: "Mark Anthony",
     role: "Automation Expert",
     image: markAnthonyPhoto,
-    // tiny zoom so his framing matches the others
     imageScale: "scale-110",
   },
 ];
@@ -125,44 +126,50 @@ export default function TeamSection() {
           </h2>
         </div>
 
-        {/* flex so last row is centered; fixed width + aspect so all cards match */}
         <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-6xl mx-auto">
           {teamMembers.map((member, index) => (
-            <Card
+            <Reveal
               key={index}
-              className="overflow-hidden bg-card/90 border border-border/60 shadow-md"
-              data-testid={`card-team-${index}`}
+              direction="up"
+              delay={index * 0.04}
+              duration={0.6}
+              debug={true}
             >
-              <CardContent className="p-0">
-                <div className="w-[160px] sm:w-[180px] md:w-[200px] lg:w-[210px] aspect-[3/4] overflow-hidden">
-                  {member.image ? (
-                    <img
-                      src={member.image}
-                      alt={member.name}
-                      className={`w-full h-full object-cover transition-transform duration-500 ${
-                        (member as any).imageScale || "object-center"
-                      }`}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
-                      {member.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </div>
-                  )}
-                </div>
+              <Card
+                className="overflow-hidden bg-card/90 border border-border/60 shadow-md"
+                data-testid={`card-team-${index}`}
+              >
+                <CardContent className="p-0">
+                  <div className="w-[160px] sm:w-[180px] md:w-[200px] lg:w-[210px] aspect-[3/4] overflow-hidden">
+                    {member.image ? (
+                      <img
+                        src={member.image}
+                        alt={member.name}
+                        className={`w-full h-full object-cover transition-transform duration-500 ${
+                          (member as any).imageScale || "object-center"
+                        }`}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
+                        {member.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="px-4 py-3 text-center">
-                  <h3 className="text-sm md:text-base font-semibold text-foreground leading-tight">
-                    {member.name}
-                  </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">
-                    {member.role}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="px-4 py-3 text-center">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground leading-tight">
+                      {member.name}
+                    </h3>
+                    <p className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">
+                      {member.role}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Reveal>
           ))}
         </div>
       </div>
