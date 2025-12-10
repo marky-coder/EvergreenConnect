@@ -1,6 +1,6 @@
 // client/src/components/Reveal.tsx
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 
 type Direction = "up" | "down" | "left" | "right";
 
@@ -16,7 +16,7 @@ interface RevealProps {
   once?: boolean;
 }
 
-/** small helper: starting offset depending on direction */
+/** starting offset depending on direction */
 const offsetFor = (direction: Direction) => {
   switch (direction) {
     case "up":
@@ -40,15 +40,21 @@ export default function Reveal({
   direction = "up",
   once = true,
 }: RevealProps) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  // useInView returns true if the element is in view (IntersectionObserver)
+  const inView = useInView(ref, { once, amount: 0.2 });
+
   const start = { opacity: 0, ...offsetFor(direction) };
+  const end = { opacity: 1, x: 0, y: 0 };
 
   return (
     <motion.div
+      ref={ref}
       initial={start}
-      whileInView={{ opacity: 1, x: 0, y: 0 }}
+      animate={inView ? end : start}
       transition={{ duration, delay, ease: "easeOut" }}
-      viewport={{ once, amount: 0.2 }}
       className={className}
+      style={{ willChange: "transform, opacity" }}
     >
       {children}
     </motion.div>
