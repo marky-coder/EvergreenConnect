@@ -1,8 +1,9 @@
-// src/components/HeroSection.tsx
+// client/src/components/HeroSection.tsx
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@assets/generated_images/Forest_canopy_hero_background_d28caa10.png";
+import Reveal from "@/components/Reveal";
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -23,37 +24,42 @@ export default function HeroSection() {
 
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-4xl mx-auto space-y-8">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
-            Welcome to Evergreen Land Investments
-          </h1>
+          <Reveal direction="up" delay={0}>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+              Welcome to Evergreen Land Investments
+            </h1>
+          </Reveal>
 
-          <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-            Quick and convenient cash offers for your property in any condition.
-            We skip the listing, commissions, and agents—putting more money in
-            your pocket.
-          </p>
+          <Reveal direction="up" delay={0.08}>
+            <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
+              Quick and convenient cash offers for your property in any condition.
+              We skip the listing, commissions, and agents—putting more money in your pocket.
+            </p>
+          </Reveal>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button
-              size="lg"
-              className="text-base sm:text-lg px-8"
-              onClick={() => navigate("/get-offer")}
-              data-testid="button-schedule-call"
-            >
-              Get Your Free Cash Offer
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+          <Reveal direction="up" delay={0.18}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button
+                size="lg"
+                className="text-base sm:text-lg px-8"
+                onClick={() => navigate("/get-offer")}
+                data-testid="button-schedule-call"
+              >
+                Get Your Free Cash Offer
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
 
-            <Button
-              variant="outline"
-              size="lg"
-              className="text-base sm:text-lg px-8 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
-              onClick={() => scrollToSection("about")}
-              data-testid="button-explore-services"
-            >
-              Learn More
-            </Button>
-          </div>
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-base sm:text-lg px-8 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
+                onClick={() => scrollToSection("about")}
+                data-testid="button-explore-services"
+              >
+                Learn More
+              </Button>
+            </div>
+          </Reveal>
         </div>
       </div>
 
