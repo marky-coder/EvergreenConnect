@@ -1,6 +1,8 @@
+// client/src/components/ProcessSection.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { Phone, Calendar, DollarSign, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const steps = [
   {
@@ -26,6 +28,8 @@ const steps = [
 ];
 
 export default function ProcessSection() {
+  const navigate = useNavigate();
+
   return (
     <section className="py-16 md:py-24 lg:py-32 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,10 +66,10 @@ export default function ProcessSection() {
           </h3>
           <Button 
             size="lg"
-            onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => navigate("/get-offer")}
             data-testid="button-contact-process"
           >
-            Contact Us
+            Get Your Free Cash Offer
           </Button>
         </div>
       </div>
