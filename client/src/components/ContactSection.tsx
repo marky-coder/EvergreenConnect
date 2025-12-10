@@ -1,63 +1,91 @@
+// client/src/components/ContactSection.tsx
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
-import { Link } from "wouter"; // ← add this
-import heroImage from "@assets/generated_images/Forest_canopy_hero_background_d28caa10.png";
+import { Mail, Phone } from "lucide-react";
 
-export default function HeroSection() {
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    element?.scrollIntoView({ behavior: "smooth" });
+export default function ContactSection() {
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const fd = new FormData(form);
+    const body = {
+      name: fd.get("name"),
+      email: fd.get("email"),
+      message: fd.get("message"),
+    };
+
+    try {
+      // If you have a real API endpoint, change the URL below.
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) throw new Error("Network Error");
+
+      // simple success UX — replace with nicer UI if you prefer
+      alert("Message sent — we'll be in touch!");
+      form.reset();
+    } catch (err) {
+      console.error(err);
+      alert("Sorry — there was a problem sending your message.");
+    }
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroImage})` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/60" />
-      </div>
-
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
-            Welcome to Evergreen Land Investments
-          </h1>
-
-          <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-            Quick and convenient cash offers for your property in any condition.
-            We skip the listing, commissions, and agents—putting more money in
-            your pocket.
-          </p>
-
-          {/* 🔧 FIXED CTA BUTTONS */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-
-            <Button size="lg" className="text-base sm:text-lg px-8" asChild>
-              <Link href="/get-offer">
-                <>
-                  Get Your Free Cash Offer
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </>
-              </Link>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              className="text-base sm:text-lg px-8 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
-              onClick={() => scrollToSection("about")}
-              data-testid="button-explore-services"
+    <section id="contact" className="py-16 md:py-24 lg:py-32 bg-muted/5">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Contact Us</h2>
+          <p className="text-muted-foreground mt-3">
+            Fill out the form below or email us at{" "}
+            <a
+              href="mailto:info@evergreenlandinvestments.co"
+              className="text-primary underline"
             >
-              Learn More
+              info@evergreenlandinvestments.co
+            </a>
+            .
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto grid gap-4">
+          <input
+            name="name"
+            type="text"
+            required
+            placeholder="Your name"
+            className="w-full rounded-md border border-border bg-background px-4 py-3"
+          />
+          <input
+            name="email"
+            type="email"
+            required
+            placeholder="Email address"
+            className="w-full rounded-md border border-border bg-background px-4 py-3"
+          />
+          <textarea
+            name="message"
+            rows={6}
+            required
+            placeholder="How can we help?"
+            className="w-full rounded-md border border-border bg-background px-4 py-3"
+          />
+
+          <div className="flex justify-center">
+            <Button type="submit" size="lg">
+              Send Message
             </Button>
           </div>
-        </div>
-      </div>
+        </form>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
-          <div className="w-1.5 h-2 bg-white/70 rounded-full" />
+        <div className="max-w-2xl mx-auto mt-8 text-center text-sm text-muted-foreground">
+          <p className="flex items-center justify-center gap-2">
+            <Mail className="h-4 w-4" /> info@evergreenlandinvestments.co
+          </p>
+          <p className="flex items-center justify-center gap-2 mt-2">
+            <Phone className="h-4 w-4" /> (512) 555-0123
+          </p>
         </div>
       </div>
     </section>
