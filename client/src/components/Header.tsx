@@ -23,21 +23,15 @@ export default function Header() {
   const scrollToSection = (id: string, isPage?: boolean) => {
     setIsMobileMenuOpen(false);
 
-    // PAGE ROUTES → SPA navigation via react-router
     if (isPage) {
-      // navigate to the page route, e.g. "/testimonials"
       navigate(`/${id}`);
       return;
     }
 
-    // SECTION SCROLLING
     if (location.pathname === "/") {
-      // Already on homepage → smooth scroll to section
       const element = document.getElementById(id);
       element?.scrollIntoView({ behavior: "smooth" });
     } else {
-      // Not on homepage → navigate to homepage with hash; Home's init will scroll
-      // Use react-router navigate to push a location with a hash
       navigate(`/#${id}`);
     }
   };
@@ -59,7 +53,6 @@ export default function Header() {
     { label: "Why Choose Us", id: "why-choose" },
     { label: "Closed Deals", id: "closed-deals", isPage: true },
     { label: "Testimonials", id: "testimonials", isPage: true },
-    { label: "Contact Us", id: "contact" },         // ← new
     { label: "Get Cash Offer", id: "get-offer", isPage: true },
   ];
 
