@@ -9,7 +9,6 @@ import TeamSection from "@/components/TeamSection";
 import TrustedPartnersSection from "@/components/TrustedPartnersSection";
 import WhyChooseSection from "@/components/WhyChooseSection";
 import ProcessSection from "@/components/ProcessSection";
-import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
@@ -75,7 +74,7 @@ export default function Home() {
 
         <TeamSection />
         <TrustedPartnersSection />
-        <ContactSection />
+        {/* ContactSection removed */}
       </main>
       <Footer />
     </div>
