@@ -46,7 +46,7 @@ const teamMembers = [
     name: "Ivy Baker",
     role: "Head of Dispositions Department",
     image: ivyPhoto,
-    // keep imageScale as a fallback; we also apply an inline style below
+    // Ivy: nudge crop so her face is centered
     imageScale: "scale-110 -translate-y-2 object-top",
   },
   {
@@ -134,13 +134,9 @@ export default function TeamSection() {
           {teamMembers.map((member, index) => {
             const isIvy = member.name === "Ivy Baker";
 
-            // Inline style specifically for Ivy to force the crop/framing.
-            // - objectPosition nudges the focal point upward so the face is centered.
-            // - transform gives a gentle zoom + upward nudge to compensate for object-cover cropping.
-            // These inline styles override layout/cropping issues reliably (no dependency on Tailwind).
             const ivyInlineStyle: React.CSSProperties | undefined = isIvy
               ? {
-                  objectPosition: "50% 22%", // center horizontally, 22% from top vertically
+                  objectPosition: "50% 22%",
                   transform: "scale(1.25) translateY(-12px)",
                 }
               : undefined;
@@ -157,7 +153,7 @@ export default function TeamSection() {
                 staggerGap={40}
               >
                 <Card
-                  className="overflow-hidden bg-card/90 border border-border/60 shadow-md group hover-lift"
+                  className="overflow-hidden bg-card/90 border border-border/60 shadow-md group hover-lift zoom-on-hover transition-transform duration-300"
                   data-testid={`card-team-${index}`}
                 >
                   <CardContent className="p-0">
@@ -166,13 +162,10 @@ export default function TeamSection() {
                         <img
                           src={member.image}
                           alt={member.name}
-                          // keep object-cover and team-photo for consistent transitions
-                          // apply member.imageScale classes where present
                           className={`w-full h-full object-cover team-photo float-on-hover ${
                             (member as any).imageScale || "object-center"
                           }`}
-                          // apply the inline Ivy style when necessary
-                          style={ivyInlineStyle}
+                          style={isIvy ? ivyInlineStyle : undefined}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
