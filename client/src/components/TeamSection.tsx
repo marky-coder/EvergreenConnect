@@ -35,7 +35,6 @@ const teamMembers = [
     role: "Head of Dispositions Department",
     image: ivyPhoto,
     imageScale: "scale-110 -translate-y-2 object-top",
-    /* Ivy will be rendered using a background-image div for deterministic crop */
   },
   { name: "Nora Zaki", role: "Dispositions Manager", image: noraPhoto },
   { name: "Lina Hossam", role: "Acquisitions Manager", image: linaPhoto },
@@ -90,14 +89,14 @@ export default function TeamSection() {
                     <div className="w-[160px] sm:w-[180px] md:w-[200px] lg:w-[210px] aspect-[3/4] overflow-hidden">
                       {member.image ? (
                         isIvy ? (
-                          // Ivy uses a background-image div to allow pixel-perfect crop control.
+                          // Ivy uses a background-image div to control crop precisely.
+                          // Background position set to 72% horizontally to show more right-side.
                           <div
                             className="team-photo-bg float-on-hover w-full h-full"
                             style={{
                               backgroundImage: `url(${member.image})`,
                               backgroundSize: "cover",
-                              // backgroundPosition tuned to give Ivy comfortable right margin and centered face:
-                              backgroundPosition: "60% 18%",
+                              backgroundPosition: "72% 18%", // <<-- moved further RIGHT to show more right margin
                             }}
                             role="img"
                             aria-label={`${member.name} - ${member.role}`}
