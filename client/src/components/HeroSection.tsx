@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@assets/generated_images/Forest_canopy_hero_background_d28caa10.png";
-import Reveal from "@/components/Reveal";
+import Fade from "@/components/Fade";
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -24,20 +24,20 @@ export default function HeroSection() {
 
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-4xl mx-auto space-y-8">
-          <Reveal direction="up" delay={0}>
+          <Fade direction="up" duration={700} delay={0} distance={20} once>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
               Welcome to Evergreen Land Investments
             </h1>
-          </Reveal>
+          </Fade>
 
-          <Reveal direction="up" delay={0.08}>
+          <Fade direction="up" duration={700} delay={100} distance={16} once>
             <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
               Quick and convenient cash offers for your property in any condition.
               We skip the listing, commissions, and agents—putting more money in your pocket.
             </p>
-          </Reveal>
+          </Fade>
 
-          <Reveal direction="up" delay={0.18}>
+          <Fade direction="up" duration={700} delay={220} distance={12} once>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button
                 size="lg"
@@ -59,7 +59,7 @@ export default function HeroSection() {
                 Learn More
               </Button>
             </div>
-          </Reveal>
+          </Fade>
         </div>
       </div>
 
