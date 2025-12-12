@@ -34,6 +34,7 @@ const teamMembers = [
     name: "Ivy Baker",
     role: "Head of Dispositions Department",
     image: ivyPhoto,
+    // keep imageScale as fallback
     imageScale: "scale-110 -translate-y-2 object-top",
   },
   { name: "Nora Zaki", role: "Dispositions Manager", image: noraPhoto },
@@ -44,7 +45,8 @@ const teamMembers = [
   {
     name: "Angel Rafols",
     role: "Acquisition Specialist",
-    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
+    image:
+      "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
   },
   { name: "Maureen Vergara", role: "Acquisition Specialist", image: maureenPhoto },
   { name: "Ayat Ayman", role: "Acquisition Specialist", image: ayatPhoto },
@@ -73,8 +75,23 @@ export default function TeamSection() {
         <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-6xl mx-auto">
           {teamMembers.map((member, index) => {
             const isIvy = member.name === "Ivy Baker";
+
+            /**
+             * Aggressive inline style specifically for Ivy:
+             * - objectPosition moves the focal point upward so the face sits inside the 3:4 crop
+             * - transform zooms the image so facial area fills the frame
+             * - display:block avoids inline image layout quirks with transforms
+             *
+             * NOTE: If this still looks off, the permanent fix is to edit/crop the source image
+             * around the face and re-upload.
+             */
             const ivyInlineStyle: React.CSSProperties | undefined = isIvy
-              ? { objectPosition: "50% 22%", transform: "scale(1.25) translateY(-12px)" }
+              ? {
+                  objectFit: "cover",
+                  objectPosition: "50% 12%", // push focal point higher
+                  transform: "scale(1.45) translateY(-28px)",
+                  display: "block",
+                }
               : undefined;
 
             return (
