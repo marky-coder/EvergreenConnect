@@ -18,13 +18,8 @@ import markAnthonyPhoto from "@assets/mark-anthony-photo.png";
 import lindseyJohnsonPhoto from "@assets/lindsey-johnson-photo.jpeg";
 import kateImperialPhoto from "@assets/kate-imperial-photo.png";
 
-import Reveal from "@/components/Reveal";
+import Fade from "@/components/Fade";
 
-/**
- * teamMembers: keep per-member `imageScale` to adjust crop/zoom/position for portrait images
- * - default fallback is "object-center"
- * - for photos where the subject is near the top, use "object-top" or small negative translate
- */
 const teamMembers = [
   {
     name: "Lindsey Johnson",
@@ -51,7 +46,7 @@ const teamMembers = [
     name: "Ivy Baker",
     role: "Head of Dispositions Department",
     image: ivyPhoto,
-    // <- Adjust Ivy's crop so her face isn't cut off
+    // Ivy: nudge crop so her face is centered
     imageScale: "scale-110 -translate-y-2 object-top",
   },
   {
@@ -127,18 +122,28 @@ export default function TeamSection() {
   return (
     <section id="team" className="py-16 md:py-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-10">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Meet The Team
-          </h2>
-        </div>
+        <Fade direction="up" duration={700} delay={0} distance={14} once>
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+              Meet The Team
+            </h2>
+          </div>
+        </Fade>
 
         <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-6xl mx-auto">
           {teamMembers.map((member, index) => (
-            <Reveal key={index} direction="up" delay={index * 0.04} duration={0.6}>
-              {/* group so we can use group-hover on children */}
+            <Fade
+              key={index}
+              direction="up"
+              delay={80 + index * 40}
+              duration={600}
+              distance={10}
+              once
+              index={index}
+              staggerGap={40}
+            >
               <Card
-                className="overflow-hidden bg-card/90 border border-border/60 shadow-md group"
+                className="overflow-hidden bg-card/90 border border-border/60 shadow-md group hover-lift"
                 data-testid={`card-team-${index}`}
               >
                 <CardContent className="p-0">
@@ -147,7 +152,7 @@ export default function TeamSection() {
                       <img
                         src={member.image}
                         alt={member.name}
-                        className={`w-full h-full object-cover team-photo ${
+                        className={`w-full h-full object-cover team-photo float-on-hover ${
                           (member as any).imageScale || "object-center"
                         }`}
                       />
@@ -171,7 +176,7 @@ export default function TeamSection() {
                   </div>
                 </CardContent>
               </Card>
-            </Reveal>
+            </Fade>
           ))}
         </div>
       </div>
