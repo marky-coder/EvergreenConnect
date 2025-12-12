@@ -7,34 +7,22 @@ type Direction = "up" | "down" | "left" | "right" | "none";
 interface FadeProps {
   children: React.ReactNode;
   className?: string;
-  /** direction of travel before fade */
   direction?: Direction;
-  /** milliseconds */
   duration?: number;
-  /** milliseconds base delay (per-element will add index*staggerGap) */
   delay?: number;
-  /** px distance to travel (CSS var --fade-distance) */
   distance?: number;
-  /** if true animate only once */
   once?: boolean;
-  /** IntersectionObserver threshold (0..1) */
   threshold?: number;
-  /** IntersectionObserver rootMargin */
   rootMargin?: string;
-  /** index for staggered children (0,1,2...) - used to compute delay */
   index?: number;
-  /** gap between staggered children in ms */
   staggerGap?: number;
-  /** show immediately (useful for SSR debugging) */
   visible?: boolean;
 }
 
 /**
- * Fade component:
- * - Adds .fade and directional class (fade-up / fade-left / ...)
- * - Sets CSS variables: --fade-duration, --fade-delay, --fade-distance
- * - Uses IntersectionObserver to toggle 'show' class.
- * - Respects prefers-reduced-motion.
+ * Debug Fade component.
+ * - Adds console debug logs so we can inspect observer behavior.
+ * - Adds data-fade-id attribute to identify instances.
  */
 export default function Fade({
   children,
@@ -51,37 +39,75 @@ export default function Fade({
   visible = false,
 }: FadeProps) {
   const ref = useRef<HTMLDivElement | null>(null);
+  // small stable id to identify instance logs
+  const instanceIdRef = useRef<string | null>(null);
+  if (!instanceIdRef.current) {
+    instanceIdRef.current = Math.random().toString(36).slice(2, 8);
+  }
+  const id = instanceIdRef.current;
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-
-    // Ensure base class
-    if (!el.classList.contains("fade")) el.classList.add("fade");
-
-    // Add directional class (fade-up / fade-left / ...)
-    const dirClass = direction && direction !== "none" ? `fade-${direction}` : "";
-    if (dirClass && !el.classList.contains(dirClass)) el.classList.add(dirClass);
-
-    // Add any extra classes passed via className
-    if (className) {
-      className.split(" ").forEach((c) => c && el.classList.add(c));
+    if (!el) {
+      console.debug(`[Fade debug ${id}] no element reference (ref.current null)`);
+      return;
     }
 
-    // Compute delay taking index/staggerGap into account
+    // ensure classes
+    if (!el.classList.contains("fade")) el.classList.add("fade");
+    const dirClass = direction && direction !== "none" ? `fade-${direction}` : "";
+    if (dirClass && !el.classList.contains(dirClass)) el.classList.add(dirClass);
+    if (className) className.split(" ").forEach((c) => c && el.classList.add(c));
+
+    // compute delay & set css vars
     const computedDelay = delay + (index ?? 0) * (staggerGap ?? 80);
     el.style.setProperty("--fade-duration", `${duration}ms`);
     el.style.setProperty("--fade-delay", `${computedDelay}ms`);
     el.style.setProperty("--fade-distance", `${distance}px`);
 
-    // Respect reduced motion -> show immediately
+    // attach debug dataset
+    el.setAttribute("data-fade-id", id);
+    el.setAttribute("data-fade-debug", "true");
+
+    // check prefers-reduced-motion
     const prefersReduced =
       typeof window !== "undefined" &&
       window.matchMedia &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (prefersReduced || visible) {
-      // If reduced motion or visible override, show immediately and don't observe
+    console.debug(
+      `[Fade debug ${id}] mounted`,
+      {
+        direction,
+        duration,
+        delay,
+        distance,
+        computedDelay,
+        once,
+        threshold,
+        rootMargin,
+        index,
+        staggerGap,
+        visible,
+        prefersReduced,
+      }
+    );
+
+    if (prefersReduced) {
+      console.debug(`[Fade debug ${id}] user prefers reduced motion -> showing immediately`);
+      el.classList.add("show");
+      return;
+    }
+
+    if (visible) {
+      console.debug(`[Fade debug ${id}] visible=true -> showing immediately`);
+      el.classList.add("show");
+      return;
+    }
+
+    // If IntersectionObserver isn't supported, show immediately as a fallback
+    if (typeof IntersectionObserver === "undefined") {
+      console.debug(`[Fade debug ${id}] IntersectionObserver not supported -> showing immediately`);
       el.classList.add("show");
       return;
     }
@@ -89,11 +115,30 @@ export default function Fade({
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
+          console.debug(
+            `[Fade debug ${id}] observer callback`,
+            { isIntersecting: entry.isIntersecting, ratio: entry.intersectionRatio }
+          );
           if (entry.isIntersecting) {
-            el.classList.add("show");
-            if (once && observer) observer.unobserve(el);
+            if (!el.classList.contains("show")) {
+              el.classList.add("show");
+              console.debug(`[Fade debug ${id}] added .show (enter)`);
+            }
+            if (once) {
+              try {
+                observer.unobserve(entry.target);
+                console.debug(`[Fade debug ${id}] unobserved (once=true)`);
+              } catch (err) {
+                /* ignore */
+              }
+            }
           } else {
-            if (!once) el.classList.remove("show");
+            if (!once) {
+              if (el.classList.contains("show")) {
+                el.classList.remove("show");
+                console.debug(`[Fade debug ${id}] removed .show (leave)`);
+              }
+            }
           }
         });
       },
@@ -104,11 +149,13 @@ export default function Fade({
     );
 
     observer.observe(el);
+    console.debug(`[Fade debug ${id}] observer.observe called`);
 
     return () => {
       try {
         observer.disconnect();
-      } catch {
+        console.debug(`[Fade debug ${id}] observer.disconnect on cleanup`);
+      } catch (err) {
         /* noop */
       }
     };
