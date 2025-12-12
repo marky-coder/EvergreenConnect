@@ -56,16 +56,19 @@ export default function Fade({
     const el = ref.current;
     if (!el) return;
 
-    // Ensure base classes
+    // Ensure base class
     if (!el.classList.contains("fade")) el.classList.add("fade");
+
     // Add directional class (fade-up / fade-left / ...)
     const dirClass = direction && direction !== "none" ? `fade-${direction}` : "";
     if (dirClass && !el.classList.contains(dirClass)) el.classList.add(dirClass);
+
+    // Add any extra classes passed via className
     if (className) {
       className.split(" ").forEach((c) => c && el.classList.add(c));
     }
 
-    // Set CSS vars
+    // Compute delay taking index/staggerGap into account
     const computedDelay = delay + (index ?? 0) * (staggerGap ?? 80);
     el.style.setProperty("--fade-duration", `${duration}ms`);
     el.style.setProperty("--fade-delay", `${computedDelay}ms`);
@@ -88,13 +91,9 @@ export default function Fade({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             el.classList.add("show");
-            if (once && observer) {
-              observer.unobserve(el);
-            }
+            if (once && observer) observer.unobserve(el);
           } else {
-            if (!once) {
-              el.classList.remove("show");
-            }
+            if (!once) el.classList.remove("show");
           }
         });
       },
@@ -113,9 +112,6 @@ export default function Fade({
         /* noop */
       }
     };
-    // We intentionally do not include a dependency list that would re-run
-    // the observer repeatedly in normal operation. If you need dynamic changes,
-    // remount the Fade or change key.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
