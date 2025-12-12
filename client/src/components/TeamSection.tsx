@@ -46,7 +46,7 @@ const teamMembers = [
     name: "Ivy Baker",
     role: "Head of Dispositions Department",
     image: ivyPhoto,
-    // Ivy: nudge crop so her face is centered
+    // keep imageScale as a fallback; we also apply an inline style below
     imageScale: "scale-110 -translate-y-2 object-top",
   },
   {
@@ -131,53 +131,72 @@ export default function TeamSection() {
         </Fade>
 
         <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-6xl mx-auto">
-          {teamMembers.map((member, index) => (
-            <Fade
-              key={index}
-              direction="up"
-              delay={80 + index * 40}
-              duration={600}
-              distance={10}
-              once
-              index={index}
-              staggerGap={40}
-            >
-              <Card
-                className="overflow-hidden bg-card/90 border border-border/60 shadow-md group hover-lift"
-                data-testid={`card-team-${index}`}
-              >
-                <CardContent className="p-0">
-                  <div className="w-[160px] sm:w-[180px] md:w-[200px] lg:w-[210px] aspect-[3/4] overflow-hidden">
-                    {member.image ? (
-                      <img
-                        src={member.image}
-                        alt={member.name}
-                        className={`w-full h-full object-cover team-photo float-on-hover ${
-                          (member as any).imageScale || "object-center"
-                        }`}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
-                        {member.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </div>
-                    )}
-                  </div>
+          {teamMembers.map((member, index) => {
+            const isIvy = member.name === "Ivy Baker";
 
-                  <div className="px-4 py-3 text-center">
-                    <h3 className="text-sm md:text-base font-semibold text-foreground leading-tight">
-                      {member.name}
-                    </h3>
-                    <p className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">
-                      {member.role}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Fade>
-          ))}
+            // Inline style specifically for Ivy to force the crop/framing.
+            // - objectPosition nudges the focal point upward so the face is centered.
+            // - transform gives a gentle zoom + upward nudge to compensate for object-cover cropping.
+            // These inline styles override layout/cropping issues reliably (no dependency on Tailwind).
+            const ivyInlineStyle: React.CSSProperties | undefined = isIvy
+              ? {
+                  objectPosition: "50% 22%", // center horizontally, 22% from top vertically
+                  transform: "scale(1.25) translateY(-12px)",
+                }
+              : undefined;
+
+            return (
+              <Fade
+                key={index}
+                direction="up"
+                delay={80 + index * 40}
+                duration={600}
+                distance={10}
+                once
+                index={index}
+                staggerGap={40}
+              >
+                <Card
+                  className="overflow-hidden bg-card/90 border border-border/60 shadow-md group hover-lift"
+                  data-testid={`card-team-${index}`}
+                >
+                  <CardContent className="p-0">
+                    <div className="w-[160px] sm:w-[180px] md:w-[200px] lg:w-[210px] aspect-[3/4] overflow-hidden">
+                      {member.image ? (
+                        <img
+                          src={member.image}
+                          alt={member.name}
+                          // keep object-cover and team-photo for consistent transitions
+                          // apply member.imageScale classes where present
+                          className={`w-full h-full object-cover team-photo float-on-hover ${
+                            (member as any).imageScale || "object-center"
+                          }`}
+                          // apply the inline Ivy style when necessary
+                          style={ivyInlineStyle}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
+                          {member.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="px-4 py-3 text-center">
+                      <h3 className="text-sm md:text-base font-semibold text-foreground leading-tight">
+                        {member.name}
+                      </h3>
+                      <p className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">
+                        {member.role}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Fade>
+            );
+          })}
         </div>
       </div>
     </section>
