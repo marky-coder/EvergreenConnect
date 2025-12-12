@@ -37,7 +37,6 @@ export default function WhyChooseSection() {
               index={index}
               staggerGap={60}
             >
-              {/* group + zoom-on-hover so both highlight and zoom together */}
               <div
                 className="flex items-start gap-3 p-4 rounded-lg hover-elevate bg-background hover-lift zoom-on-hover group transition-transform duration-300"
                 data-testid={`reason-${index}`}
