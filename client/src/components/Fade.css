@@ -1,127 +1,76 @@
-// client/src/components/Fade.tsx
-import React, { useEffect, useRef } from "react";
-import "./Fade.css";
+/* client/src/components/Fade.css
+   Minimal, parser-friendly fade + directional reveal styles.
+   Save this file as UTF-8 without BOM and make sure there are no
+   accidental JS comments (//) or Markdown ticks (```) in the file.
+*/
 
-type Direction = "up" | "down" | "left" | "right" | "none";
-
-interface FadeProps {
-  children: React.ReactNode;
-  className?: string;
-  /** direction of travel before fade */
-  direction?: Direction;
-  /** milliseconds */
-  duration?: number;
-  /** milliseconds base delay (per-element will add index*staggerGap) */
-  delay?: number;
-  /** px distance to travel (CSS var --fade-distance) */
-  distance?: number;
-  /** if true animate only once */
-  once?: boolean;
-  /** IntersectionObserver threshold (0..1) */
-  threshold?: number;
-  /** IntersectionObserver rootMargin */
-  rootMargin?: string;
-  /** index for staggered children (0,1,2...) - used to compute delay */
-  index?: number;
-  /** gap between staggered children in ms */
-  staggerGap?: number;
-  /** show immediately (useful for SSR debugging) */
-  visible?: boolean;
+/* base: starts hidden and slightly translated */
+.fade {
+  opacity: 0;
+  transform: translateY(var(--fade-distance, 12px));
+  transition:
+    opacity var(--fade-duration, 600ms) ease-out var(--fade-delay, 0ms),
+    transform var(--fade-duration, 600ms) ease-out var(--fade-delay, 0ms);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-/**
- * Fade component:
- * - Adds .fade and directional class (fade-up / fade-left / ...)
- * - Sets CSS variables: --fade-duration, --fade-delay, --fade-distance
- * - Uses IntersectionObserver to toggle 'show' class.
- * - Respects prefers-reduced-motion.
- */
-export default function Fade({
-  children,
-  className = "",
-  direction = "up",
-  duration = 600,
-  delay = 0,
-  distance = 12,
-  once = true,
-  threshold = 0.2,
-  rootMargin = "0px",
-  index = 0,
-  staggerGap = 80,
-  visible = false,
-}: FadeProps) {
-  const ref = useRef<HTMLDivElement | null>(null);
+/* visible state */
+.fade.show {
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+}
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+/* directional helpers */
+.fade-up    { transform: translateY(var(--fade-distance, 12px)); }
+.fade-down  { transform: translateY(calc(var(--fade-distance, 12px) * -1)); }
+.fade-left  { transform: translateX(var(--fade-distance, 12px)); }
+.fade-right { transform: translateX(calc(var(--fade-distance, 12px) * -1)); }
 
-    // Ensure base classes
-    if (!el.classList.contains("fade")) el.classList.add("fade");
-    // Add directional class (fade-up / fade-left / ...)
-    const dirClass = direction && direction !== "none" ? `fade-${direction}` : "";
-    if (dirClass && !el.classList.contains(dirClass)) el.classList.add(dirClass);
-    if (className) {
-      className.split(" ").forEach((c) => c && el.classList.add(c));
-    }
+/* when visible override */
+.fade.show.fade-up,
+.fade.show.fade-down,
+.fade.show.fade-left,
+.fade.show.fade-right {
+  transform: translateX(0) translateY(0);
+}
 
-    // Set CSS vars
-    const computedDelay = delay + (index ?? 0) * (staggerGap ?? 80);
-    el.style.setProperty("--fade-duration", `${duration}ms`);
-    el.style.setProperty("--fade-delay", `${computedDelay}ms`);
-    el.style.setProperty("--fade-distance", `${distance}px`);
+/* small variants */
+.fade--subtle { --fade-distance: 6px; --fade-duration: 420ms; }
+.fade--slow   { --fade-duration: 900ms; }
+.fade--quick  { --fade-duration: 320ms; }
 
-    // Respect reduced motion -> show immediately
-    const prefersReduced =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* optional simple stagger support: parent .fade-stagger > .fade
+   each child can set --fade-index (0,1,2...) and the transition-delay
+   will be computed as index * gap. */
+.fade-stagger > .fade {
+  --stagger-gap: var(--stagger-gap, 80ms);
+  transition-delay: calc(var(--fade-index, 0) * var(--stagger-gap));
+}
 
-    if (prefersReduced || visible) {
-      // If reduced motion or visible override, show immediately and don't observe
-      el.classList.add("show");
-      return;
-    }
+/* explicit inline delay support (if you set --fade-delay inline it will be used) */
+.fade[style*="--fade-delay"] {}
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            el.classList.add("show");
-            if (once && observer) {
-              observer.unobserve(el);
-            }
-          } else {
-            if (!once) {
-              el.classList.remove("show");
-            }
-          }
-        });
-      },
-      {
-        threshold,
-        rootMargin,
-      }
-    );
+/* visible-for-SSR helper */
+.fade-visible { opacity: 1 !important; transform: none !important; transition: none !important; }
 
-    observer.observe(el);
-
-    return () => {
-      try {
-        observer.disconnect();
-      } catch {
-        /* noop */
-      }
-    };
-    // We intentionally do not include a dependency list that would re-run
-    // the observer repeatedly in normal operation. If you need dynamic changes,
-    // remount the Fade or change key.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return (
-    <div ref={ref} aria-hidden={false}>
-      {children}
-    </div>
-  );
+/* accessibility: reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .fade,
+  .fade-up,
+  .fade-down,
+  .fade-left,
+  .fade-right,
+  .fade.show,
+  .fade--subtle,
+  .fade--slow,
+  .fade--quick,
+  .fade-stagger > .fade,
+  .fade-visible {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
 }
