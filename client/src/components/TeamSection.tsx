@@ -34,7 +34,6 @@ const teamMembers = [
     name: "Ivy Baker",
     role: "Head of Dispositions Department",
     image: ivyPhoto,
-    // keep imageScale as fallback
     imageScale: "scale-110 -translate-y-2 object-top",
   },
   { name: "Nora Zaki", role: "Dispositions Manager", image: noraPhoto },
@@ -54,12 +53,7 @@ const teamMembers = [
   { name: "Raven Santiago", role: "Property Analyst", image: ravenPhoto },
   { name: "Kier Caguioa", role: "Property Analyst", image: kierPhoto },
   { name: "Kate Imperial", role: "Data Manager", image: kateImperialPhoto },
-  {
-    name: "Mark Anthony",
-    role: "Automation Expert",
-    image: markAnthonyPhoto,
-    imageScale: "scale-110",
-  },
+  { name: "Mark Anthony", role: "Automation Expert", image: markAnthonyPhoto, imageScale: "scale-110" },
 ];
 
 export default function TeamSection() {
@@ -75,24 +69,6 @@ export default function TeamSection() {
         <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-6xl mx-auto">
           {teamMembers.map((member, index) => {
             const isIvy = member.name === "Ivy Baker";
-
-            /**
-             * Aggressive inline style specifically for Ivy:
-             * - objectPosition moves the focal point upward so the face sits inside the 3:4 crop
-             * - transform zooms the image so facial area fills the frame
-             * - display:block avoids inline image layout quirks with transforms
-             *
-             * NOTE: If this still looks off, the permanent fix is to edit/crop the source image
-             * around the face and re-upload.
-             */
-            const ivyInlineStyle: React.CSSProperties | undefined = isIvy
-              ? {
-                  objectFit: "cover",
-                  objectPosition: "50% 12%", // push focal point higher
-                  transform: "scale(1.45) translateY(-28px)",
-                  display: "block",
-                }
-              : undefined;
 
             return (
               <Fade
@@ -115,14 +91,13 @@ export default function TeamSection() {
                         <img
                           src={member.image}
                           alt={member.name}
-                          className={`w-full h-full object-cover team-photo float-on-hover ${
+                          className={`w-full h-full object-cover team-photo float-on-hover ${isIvy ? "ivy-photo" : ""} ${
                             (member as any).imageScale || "object-center"
                           }`}
-                          style={isIvy ? ivyInlineStyle : undefined}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
-                          {member.name.split(" ").map((n) => n[0]).join("")}
+                          {member.name.split(" ").map(n => n[0]).join("")}
                         </div>
                       )}
                     </div>
@@ -131,9 +106,7 @@ export default function TeamSection() {
                       <h3 className="text-sm md:text-base font-semibold text-foreground leading-tight">
                         {member.name}
                       </h3>
-                      <p className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">
-                        {member.role}
-                      </p>
+                      <p className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">{member.role}</p>
                     </div>
                   </CardContent>
                 </Card>
