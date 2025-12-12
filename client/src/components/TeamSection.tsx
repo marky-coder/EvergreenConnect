@@ -35,6 +35,7 @@ const teamMembers = [
     role: "Head of Dispositions Department",
     image: ivyPhoto,
     imageScale: "scale-110 -translate-y-2 object-top",
+    /* Ivy will be rendered using a background-image div for deterministic crop */
   },
   { name: "Nora Zaki", role: "Dispositions Manager", image: noraPhoto },
   { name: "Lina Hossam", role: "Acquisitions Manager", image: linaPhoto },
@@ -88,16 +89,31 @@ export default function TeamSection() {
                   <CardContent className="p-0">
                     <div className="w-[160px] sm:w-[180px] md:w-[200px] lg:w-[210px] aspect-[3/4] overflow-hidden">
                       {member.image ? (
-                        <img
-                          src={member.image}
-                          alt={member.name}
-                          className={`w-full h-full object-cover team-photo float-on-hover ${isIvy ? "ivy-photo" : ""} ${
-                            (member as any).imageScale || "object-center"
-                          }`}
-                        />
+                        isIvy ? (
+                          // Ivy uses a background-image div to allow pixel-perfect crop control.
+                          <div
+                            className="team-photo-bg float-on-hover w-full h-full"
+                            style={{
+                              backgroundImage: `url(${member.image})`,
+                              backgroundSize: "cover",
+                              // backgroundPosition tuned to give Ivy comfortable right margin and centered face:
+                              backgroundPosition: "60% 18%",
+                            }}
+                            role="img"
+                            aria-label={`${member.name} - ${member.role}`}
+                          />
+                        ) : (
+                          <img
+                            src={member.image}
+                            alt={`${member.name} - ${member.role}`}
+                            className={`w-full h-full object-cover team-photo float-on-hover ${
+                              (member as any).imageScale || "object-center"
+                            }`}
+                          />
+                        )
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
-                          {member.name.split(" ").map(n => n[0]).join("")}
+                          {member.name.split(" ").map((n) => n[0]).join("")}
                         </div>
                       )}
                     </div>
@@ -106,7 +122,9 @@ export default function TeamSection() {
                       <h3 className="text-sm md:text-base font-semibold text-foreground leading-tight">
                         {member.name}
                       </h3>
-                      <p className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">{member.role}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground mt-1 leading-tight">
+                        {member.role}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
