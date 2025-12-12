@@ -21,95 +21,37 @@ import kateImperialPhoto from "@assets/kate-imperial-photo.png";
 import Fade from "@/components/Fade";
 
 const teamMembers = [
-  {
-    name: "Lindsey Johnson",
-    role: "Founder",
-    image: lindseyJohnsonPhoto,
-  },
+  { name: "Lindsey Johnson", role: "Founder", image: lindseyJohnsonPhoto },
   {
     name: "Nathaniel Brimlow",
     role: "Founder/CEO",
     image: nathanielPhoto,
     imageScale: "scale-[1.45] -translate-y-2 object-top",
   },
-  {
-    name: "Mohamed Ayman",
-    role: "COO",
-    image: mohamedPhoto,
-  },
-  {
-    name: "Mostafa Hossam",
-    role: "Head of Outreach Department",
-    image: mostafaPhoto,
-  },
+  { name: "Mohamed Ayman", role: "COO", image: mohamedPhoto },
+  { name: "Mostafa Hossam", role: "Head of Outreach Department", image: mostafaPhoto },
   {
     name: "Ivy Baker",
     role: "Head of Dispositions Department",
     image: ivyPhoto,
-    // Ivy: nudge crop so her face is centered
     imageScale: "scale-110 -translate-y-2 object-top",
   },
-  {
-    name: "Nora Zaki",
-    role: "Dispositions Manager",
-    image: noraPhoto,
-  },
-  {
-    name: "Lina Hossam",
-    role: "Acquisitions Manager",
-    image: linaPhoto,
-  },
-  {
-    name: "Nate Atkins",
-    role: "Acquisitions Manager",
-    image: natePhoto,
-  },
-  {
-    name: "Denise Mancera",
-    role: "Success Manager",
-    image: denisePhoto,
-  },
-  {
-    name: "Hanna Aboubakr",
-    role: "Social Media Manager",
-    image: hanaPhoto,
-  },
+  { name: "Nora Zaki", role: "Dispositions Manager", image: noraPhoto },
+  { name: "Lina Hossam", role: "Acquisitions Manager", image: linaPhoto },
+  { name: "Nate Atkins", role: "Acquisitions Manager", image: natePhoto },
+  { name: "Denise Mancera", role: "Success Manager", image: denisePhoto },
+  { name: "Hanna Aboubakr", role: "Social Media Manager", image: hanaPhoto },
   {
     name: "Angel Rafols",
     role: "Acquisition Specialist",
-    image:
-      "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
+    image: "https://investwithevergreen.com/wp-content/uploads/2025/04/Angel-Photo-e1746039828271.jpg",
   },
-  {
-    name: "Maureen Vergara",
-    role: "Acquisition Specialist",
-    image: maureenPhoto,
-  },
-  {
-    name: "Ayat Ayman",
-    role: "Acquisition Specialist",
-    image: ayatPhoto,
-  },
-  {
-    name: "Shay Magdi",
-    role: "Acquisition Specialist",
-    image: shayPhoto,
-  },
-  {
-    name: "Raven Santiago",
-    role: "Property Analyst",
-    image: ravenPhoto,
-  },
-  {
-    name: "Kier Caguioa",
-    role: "Property Analyst",
-    image: kierPhoto,
-  },
-  {
-    name: "Kate Imperial",
-    role: "Data Manager",
-    image: kateImperialPhoto,
-  },
+  { name: "Maureen Vergara", role: "Acquisition Specialist", image: maureenPhoto },
+  { name: "Ayat Ayman", role: "Acquisition Specialist", image: ayatPhoto },
+  { name: "Shay Magdi", role: "Acquisition Specialist", image: shayPhoto },
+  { name: "Raven Santiago", role: "Property Analyst", image: ravenPhoto },
+  { name: "Kier Caguioa", role: "Property Analyst", image: kierPhoto },
+  { name: "Kate Imperial", role: "Data Manager", image: kateImperialPhoto },
   {
     name: "Mark Anthony",
     role: "Automation Expert",
@@ -124,21 +66,15 @@ export default function TeamSection() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <Fade direction="up" duration={700} delay={0} distance={14} once>
           <div className="text-center max-w-3xl mx-auto mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-              Meet The Team
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">Meet The Team</h2>
           </div>
         </Fade>
 
         <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-6xl mx-auto">
           {teamMembers.map((member, index) => {
             const isIvy = member.name === "Ivy Baker";
-
             const ivyInlineStyle: React.CSSProperties | undefined = isIvy
-              ? {
-                  objectPosition: "50% 22%",
-                  transform: "scale(1.25) translateY(-12px)",
-                }
+              ? { objectPosition: "50% 22%", transform: "scale(1.25) translateY(-12px)" }
               : undefined;
 
             return (
@@ -169,10 +105,7 @@ export default function TeamSection() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
-                          {member.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
+                          {member.name.split(" ").map((n) => n[0]).join("")}
                         </div>
                       )}
                     </div>
