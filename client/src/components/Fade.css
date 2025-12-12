@@ -1,0 +1,119 @@
+/* client/src/components/Fade.css
+ *
+ * Full, standalone CSS file implementing a flexible fade / reveal system.
+ *
+ * Usage:
+ *   <div class="fade fade-up" style="--fade-delay: 120ms; --fade-duration: 700ms;">
+ *     ...
+ *   </div>
+ *
+ * To show the element, add the `show` class (or toggle it from JS):
+ *   element.classList.add('show')
+ *
+ * For lists you can set --fade-delay on each child to stagger them.
+ *
+ * Accessibility:
+ *   Respects prefers-reduced-motion and disables animations if enabled.
+ */
+
+/* base: starts hidden and slightly translated */
+.fade {
+  opacity: 0;
+  transform: translateY(var(--fade-distance, 12px));
+  transition:
+    opacity var(--fade-duration, 600ms) ease-out var(--fade-delay, 0ms),
+    transform var(--fade-duration, 600ms) ease-out var(--fade-delay, 0ms);
+  will-change: opacity, transform;
+  backface-visibility: hidden; /* avoid blurry transforms */
+  -webkit-backface-visibility: hidden;
+  contain: paint; /* helps with composite layer generation */
+}
+
+/* visible state */
+.fade.show {
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+}
+
+/* directions — choose one or none */
+.fade-up    { transform: translateY(var(--fade-distance, 12px)); }
+.fade-down  { transform: translateY(calc(var(--fade-distance, 12px) * -1)); }
+.fade-left  { transform: translateX(var(--fade-distance, 12px)); }
+.fade-right { transform: translateX(calc(var(--fade-distance, 12px) * -1)); }
+
+/* when visible, override transform to neutral */
+.fade.show.fade-up,
+.fade.show.fade-down,
+.fade.show.fade-left,
+.fade.show.fade-right {
+  transform: translateX(0) translateY(0);
+}
+
+/* small variants for subtle / quick fades */
+.fade--subtle {
+  --fade-distance: 6px;
+  --fade-duration: 420ms;
+}
+.fade--slow {
+  --fade-duration: 900ms;
+}
+.fade--quick {
+  --fade-duration: 320ms;
+}
+
+/* helper to easily apply a CSS-driven stagger:
+   - Give container .fade-stagger and set --stagger-gap (default 80ms)
+   - Each child should set inline --fade-index (0,1,2..) and we'll compute a delay
+   Example: <div class="fade fade-up" style="--fade-index: 2"> ... */
+.fade-stagger > .fade {
+  /* If an element sets --fade-index, compute its delay (index * gap) */
+  --stagger-gap: var(--stagger-gap, 80ms);
+  /* fallback if no index present will be 0ms */
+  transition-delay: calc((var(--fade-index, 0) * 1) * var(--stagger-gap));
+}
+
+/* utility: if you want to set delay explicitly on an element,
+   set --fade-delay: 150ms; (the default is 0ms) */
+.fade[style*="--fade-delay"] {
+  /* no-op: retained so authors know inline var will be used */
+}
+
+/* Developer-friendly visible-only state for SSR if you want to render visible by default.
+   Use .fade-visible when you want server-side rendered content to be shown immediately. */
+.fade-visible {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Light-touch focus outline (if you animate interactive elements) */
+.fade:focus-visible {
+  outline: 2px solid rgba(21,128,61,0.85); /* green-ish focus */
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/* Reduced motion: respect user's OS/browser preference */
+@media (prefers-reduced-motion: reduce) {
+  .fade,
+  .fade-up,
+  .fade-down,
+  .fade-left,
+  .fade-right,
+  .fade.show,
+  .fade--subtle,
+  .fade--slow,
+  .fade--quick,
+  .fade-stagger > .fade,
+  .fade-visible {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Small helper to visually debug reveal positions during development.
+   Remove or ignore in production. Uncomment to enable:
+.fade { outline: 1px dashed rgba(255,0,0,0.15); }
+*/
