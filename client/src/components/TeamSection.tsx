@@ -20,6 +20,11 @@ import kateImperialPhoto from "@assets/kate-imperial-photo.png";
 
 import Reveal from "@/components/Reveal";
 
+/**
+ * teamMembers: keep per-member `imageScale` to adjust crop/zoom/position for portrait images
+ * - default fallback is "object-center"
+ * - for photos where the subject is near the top, use "object-top" or small negative translate
+ */
 const teamMembers = [
   {
     name: "Lindsey Johnson",
@@ -46,6 +51,8 @@ const teamMembers = [
     name: "Ivy Baker",
     role: "Head of Dispositions Department",
     image: ivyPhoto,
+    // <- Adjust Ivy's crop so her face isn't cut off
+    imageScale: "scale-110 -translate-y-2 object-top",
   },
   {
     name: "Nora Zaki",
@@ -128,15 +135,10 @@ export default function TeamSection() {
 
         <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-6xl mx-auto">
           {teamMembers.map((member, index) => (
-            <Reveal
-              key={index}
-              direction="up"
-              delay={index * 0.04}
-              duration={0.6}
-              debug={true}
-            >
+            <Reveal key={index} direction="up" delay={index * 0.04} duration={0.6}>
+              {/* group so we can use group-hover on children */}
               <Card
-                className="overflow-hidden bg-card/90 border border-border/60 shadow-md"
+                className="overflow-hidden bg-card/90 border border-border/60 shadow-md group"
                 data-testid={`card-team-${index}`}
               >
                 <CardContent className="p-0">
@@ -145,7 +147,7 @@ export default function TeamSection() {
                       <img
                         src={member.image}
                         alt={member.name}
-                        className={`w-full h-full object-cover transition-transform duration-500 ${
+                        className={`w-full h-full object-cover team-photo ${
                           (member as any).imageScale || "object-center"
                         }`}
                       />
