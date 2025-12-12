@@ -10,9 +10,12 @@ permissions:
   pages: write
   id-token: write
 
+# Use concurrency so only one deploy run for the "pages" group runs at a time,
+# and do NOT cancel in-progress runs (new runs will be queued until the current
+# one finishes).
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -20,18 +23,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+        
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      
+        
       - name: Install dependencies & build
         run: |
           npm install
           npm run build
-      
+        
       - name: Upload build artifact
         uses: actions/upload-pages-artifact@v3
         with:
