@@ -37,16 +37,19 @@ export default function WhyChooseSection() {
               index={index}
               staggerGap={60}
             >
+              {/* group + zoom-on-hover so both highlight and zoom together */}
               <div
-                className="flex items-start gap-3 p-4 rounded-lg hover-elevate bg-background hover-lift"
+                className="flex items-start gap-3 p-4 rounded-lg hover-elevate bg-background hover-lift zoom-on-hover group transition-transform duration-300"
                 data-testid={`reason-${index}`}
               >
                 <div className="flex-shrink-0 mt-0.5">
-                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Check className="h-4 w-4 text-primary" />
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center transition-colors group-hover:bg-primary/20">
+                    <Check className="h-4 w-4 text-primary group-hover:text-primary" />
                   </div>
                 </div>
-                <p className="text-base text-foreground">{reason}</p>
+                <p className="text-base text-foreground group-hover:text-primary transition-colors">
+                  {reason}
+                </p>
               </div>
             </Fade>
           ))}
