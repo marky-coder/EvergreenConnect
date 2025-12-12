@@ -1,0 +1,86 @@
+/* client/src/styles/animations.css
+ *
+ * Animations for:
+ *  - btn-jump (continuous jump on hover for buttons)
+ *  - float-on-hover (gentle floating animation for icons/images)
+ *  - zoom-on-hover  (subtle zoom for tiles/cards on hover)
+ *  - team-photo     (slight lift/scale of team photos)
+ *
+ * Accessibility: respects prefers-reduced-motion.
+ */
+
+/* === Button jump === */
+@keyframes btnJump {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Apply a transform origin and smooth transition baseline */
+.btn-jump {
+  transform-origin: center;
+  transition: transform 140ms ease;
+}
+
+/* Continuous jump while hovered */
+.btn-jump:hover {
+  animation: btnJump 0.6s ease-in-out infinite;
+}
+
+/* === Floating hover for icons/images === */
+@keyframes floaty {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-8px); }
+}
+
+.float-on-hover {
+  transition: transform 300ms ease, box-shadow 300ms ease;
+  will-change: transform;
+}
+
+/* Continuous float while hovered; runs alternate so it feels organic */
+.float-on-hover:hover {
+  animation: floaty 1.6s ease-in-out infinite alternate;
+}
+
+/* === Zoom on hover for tiles/cards === */
+.zoom-on-hover {
+  transition: transform 260ms cubic-bezier(.2,.8,.2,1), box-shadow 260ms;
+  /* make sure transform operates on its own layer for smoothness */
+  will-change: transform;
+}
+
+.zoom-on-hover:hover {
+  transform: scale(1.03);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+}
+
+/* small visual lift for the team-photo element itself */
+.team-photo {
+  transition: transform 260ms ease, filter 260ms ease;
+  will-change: transform;
+}
+
+.team-photo:hover {
+  transform: translateY(-6px) scale(1.02);
+}
+
+/* Combined rule: elements that want continuous hover motion vs single-step scale */
+.zoom-on-hover:hover,
+.team-photo:hover,
+.btn-jump:hover,
+.float-on-hover:hover {
+  /* safe defaults are applied in each block above */
+}
+
+/* Accessibility: respect user request to reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .btn-jump:hover,
+  .float-on-hover:hover,
+  .zoom-on-hover:hover,
+  .team-photo:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
